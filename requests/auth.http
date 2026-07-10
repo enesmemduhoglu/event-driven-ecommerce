@@ -1,0 +1,50 @@
+### All requests go through the API Gateway (port 5000)
+@gateway = http://localhost:5000
+
+### Register a new user
+POST {{gateway}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "Test1234!",
+  "firstName": "Test",
+  "lastName": "User"
+}
+
+### Login (copy accessToken/refreshToken from the response)
+# @name login
+POST {{gateway}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "Test1234!"
+}
+
+### Login as seeded admin
+POST {{gateway}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@ecommerce.dev",
+  "password": "Admin123!"
+}
+
+### Current user (requires Bearer token)
+GET {{gateway}}/api/auth/me
+Authorization: Bearer {{login.response.body.accessToken}}
+
+### Rotate refresh token
+POST {{gateway}}/api/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{login.response.body.refreshToken}}"
+}
+
+### OIDC discovery + JWKS (how services validate tokens)
+GET {{gateway}}/.well-known/openid-configuration
+
+###
+GET {{gateway}}/.well-known/jwks.json
