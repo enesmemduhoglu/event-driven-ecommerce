@@ -1,4 +1,4 @@
-using Basket.Api.Consumers;
+﻿using Basket.Api.Consumers;
 using Basket.Api.Services;
 using BuildingBlocks.Common.Auth;
 using BuildingBlocks.Common.Middleware;
@@ -24,7 +24,9 @@ builder.Services.AddSingleton<IBasketRepository, RedisBasketRepository>();
 builder.Services.AddMassTransit(x =>
 {
     x.AddConsumer<OrderCreatedConsumer>();
-    x.SetKebabCaseEndpointNameFormatter();
+    // Service-prefixed queue names: each service gets its own queue per event
+    // (otherwise same-named consumers across services would compete on one queue).
+    x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("basket", false));
 
     x.UsingRabbitMq((context, cfg) =>
     {

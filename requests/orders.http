@@ -1,0 +1,61 @@
+### All requests go through the API Gateway (port 5000)
+@gateway = http://localhost:5000
+
+### Login
+# @name login
+POST {{gateway}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "Test1234!"
+}
+
+### Place an order — happy path (any card NOT ending in 0002)
+# Saga: OrderCreated -> stock reserved -> payment processed -> Confirmed
+POST {{gateway}}/api/orders
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "items": [
+    {
+      "productId": "00000000-0000-0000-0000-000000000000",
+      "productName": "Sample Product",
+      "unitPrice": 109.99,
+      "quantity": 2
+    }
+  ],
+  "shippingAddress": "Ataturk Cad. No:1 Istanbul",
+  "cardNumber": "4111111111111111"
+}
+
+### Place an order — payment failure + compensation (card ending 0002)
+# Saga: stock reserved -> payment DECLINED -> stock released -> Cancelled
+POST {{gateway}}/api/orders
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "items": [
+    {
+      "productId": "00000000-0000-0000-0000-000000000000",
+      "productName": "Sample Product",
+      "unitPrice": 109.99,
+      "quantity": 1
+    }
+  ],
+  "shippingAddress": "Ataturk Cad. No:1 Istanbul",
+  "cardNumber": "4000000000000002"
+}
+
+### My orders
+GET {{gateway}}/api/orders
+Authorization: Bearer {{login.response.body.accessToken}}
+
+### Order detail (poll to watch Pending -> Confirmed/Cancelled)
+GET {{gateway}}/api/orders/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{login.response.body.accessToken}}
+
+### Stock of a product (Inventory service, via gateway)
+GET {{gateway}}/api/inventory/00000000-0000-0000-0000-000000000000

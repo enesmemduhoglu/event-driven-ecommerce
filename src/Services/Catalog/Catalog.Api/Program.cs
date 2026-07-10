@@ -1,4 +1,4 @@
-using BuildingBlocks.Common.Auth;
+﻿using BuildingBlocks.Common.Auth;
 using BuildingBlocks.Common.Middleware;
 using BuildingBlocks.Common.Swagger;
 using BuildingBlocks.Logging;
@@ -31,7 +31,9 @@ builder.Services.AddMassTransit(x =>
         o.QueryDelay = TimeSpan.FromSeconds(1);
     });
 
-    x.SetKebabCaseEndpointNameFormatter();
+    // Service-prefixed queue names: each service gets its own queue per event
+    // (otherwise same-named consumers across services would compete on one queue).
+    x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("catalog", false));
 
     x.UsingRabbitMq((context, cfg) =>
     {

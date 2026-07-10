@@ -1,4 +1,4 @@
-using BuildingBlocks.Common.Middleware;
+﻿using BuildingBlocks.Common.Middleware;
 using BuildingBlocks.Common.Swagger;
 using BuildingBlocks.Logging;
 using Elastic.Clients.Elasticsearch;
@@ -32,7 +32,9 @@ builder.Services.AddMassTransit(x =>
     x.AddConsumer<ProductPriceChangedConsumer>();
     x.AddConsumer<ProductDeletedConsumer>();
 
-    x.SetKebabCaseEndpointNameFormatter();
+    // Service-prefixed queue names: each service gets its own queue per event
+    // (otherwise same-named consumers across services would compete on one queue).
+    x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("search", false));
 
     x.UsingRabbitMq((context, cfg) =>
     {
