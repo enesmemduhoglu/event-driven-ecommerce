@@ -1,0 +1,49 @@
+### All requests go through the API Gateway (port 5000)
+@gateway = http://localhost:5000
+
+### Login as admin first (write operations require the Admin role)
+# @name adminLogin
+POST {{gateway}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@ecommerce.dev",
+  "password": "Admin123!"
+}
+
+### List categories (public)
+# @name categories
+GET {{gateway}}/api/categories
+
+### Create a product (Admin) — publishes ProductCreated via the transactional outbox
+POST {{gateway}}/api/products
+Authorization: Bearer {{adminLogin.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "name": "iPhone 15 Pro",
+  "description": "Apple flagship smartphone with titanium design",
+  "price": 1299.99,
+  "categoryId": "{{categories.response.body.$[0].id}}"
+}
+
+### List products (public, paged)
+GET {{gateway}}/api/products?page=1&pageSize=20
+
+### Product detail (served from Redis cache after first hit)
+GET {{gateway}}/api/products/00000000-0000-0000-0000-000000000000
+
+### Change price (Admin) — publishes ProductPriceChanged, Search index follows
+PATCH {{gateway}}/api/products/00000000-0000-0000-0000-000000000000/price
+Authorization: Bearer {{adminLogin.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "newPrice": 1199.99
+}
+
+### Full-text search (Elasticsearch, fed by Catalog events)
+GET {{gateway}}/api/search?q=iphone
+
+### Search with filters and sorting
+GET {{gateway}}/api/search?q=phone&minPrice=500&maxPrice=2000&sort=price_asc&page=1&pageSize=10

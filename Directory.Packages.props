@@ -5,10 +5,11 @@
   </PropertyGroup>
 
   <ItemGroup Label="Messaging">
-    <!-- Pinned to 8.x: MassTransit v9+ is commercially licensed. Do not upgrade to 9.x. -->
-    <PackageVersion Include="MassTransit" Version="8.5.10" />
-    <PackageVersion Include="MassTransit.RabbitMQ" Version="8.5.10" />
-    <PackageVersion Include="MassTransit.EntityFrameworkCore" Version="8.5.10" />
+    <!-- Pinned to 8.4.x: MassTransit v9+ is commercially licensed, and 8.5.x moved its
+         EF Core dependency to EF 9 which conflicts with the EF 8 / Npgsql 8 stack here. -->
+    <PackageVersion Include="MassTransit" Version="8.4.1" />
+    <PackageVersion Include="MassTransit.RabbitMQ" Version="8.4.1" />
+    <PackageVersion Include="MassTransit.EntityFrameworkCore" Version="8.4.1" />
   </ItemGroup>
 
   <ItemGroup Label="Data">
