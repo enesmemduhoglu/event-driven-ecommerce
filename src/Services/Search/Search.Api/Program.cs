@@ -13,7 +13,12 @@ builder.UseSharedSerilog("search-api");
 
 builder.Services.AddControllers();
 builder.Services.AddSwaggerWithJwt("Search API");
-builder.Services.AddHealthChecks();
+builder.Services.AddSharedTelemetry(builder.Configuration, "search-api");
+
+var rabbitHealthCs = $"amqp://{builder.Configuration["RabbitMq:Username"] ?? "guest"}:{builder.Configuration["RabbitMq:Password"] ?? "guest"}@{builder.Configuration["RabbitMq:Host"] ?? "localhost"}:5672/";
+builder.Services.AddHealthChecks()
+    .AddElasticsearch(builder.Configuration["Elasticsearch:Url"] ?? "http://localhost:9200", name: "elasticsearch")
+    .AddRabbitMQ(rabbitConnectionString: rabbitHealthCs, name: "rabbitmq");
 
 builder.Services.AddSingleton(_ =>
 {
@@ -56,6 +61,6 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.MapControllers();
-app.MapHealthChecks("/health");
+app.MapObservabilityEndpoints();
 
 app.Run();

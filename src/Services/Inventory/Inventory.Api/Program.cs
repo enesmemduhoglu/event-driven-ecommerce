@@ -15,7 +15,12 @@ builder.UseSharedSerilog("inventory-api");
 builder.Services.AddControllers();
 builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddSwaggerWithJwt("Inventory API");
-builder.Services.AddHealthChecks();
+builder.Services.AddSharedTelemetry(builder.Configuration, "inventory-api");
+
+var rabbitHealthCs = $"amqp://{builder.Configuration["RabbitMq:Username"] ?? "guest"}:{builder.Configuration["RabbitMq:Password"] ?? "guest"}@{builder.Configuration["RabbitMq:Host"] ?? "localhost"}:5672/";
+builder.Services.AddHealthChecks()
+    .AddNpgSql(builder.Configuration.GetConnectionString("InventoryDb")!, name: "postgres")
+    .AddRabbitMQ(rabbitConnectionString: rabbitHealthCs, name: "rabbitmq");
 
 builder.Services.AddDbContext<InventoryDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("InventoryDb")));
@@ -67,7 +72,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapHealthChecks("/health");
+app.MapObservabilityEndpoints();
 
 using (var scope = app.Services.CreateScope())
 {

@@ -1,6 +1,28 @@
 name: ecommerce-platform
 
+# Shared environment for app containers (profile "app").
+x-service-env: &service-env
+  ASPNETCORE_ENVIRONMENT: Development
+  RabbitMq__Host: rabbitmq
+  Seq__ServerUrl: http://seq:5341
+  Otlp__Endpoint: http://jaeger:4317
+  Jwt__Authority: http://identity-api:8080
+  Jwt__Issuer: http://identity-api:8080
+  Jwt__Audience: ecommerce
+
+x-app-defaults: &app-defaults
+  profiles: ["app"]
+  restart: unless-stopped
+  depends_on:
+    postgres:
+      condition: service_healthy
+    rabbitmq:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+
 services:
+  # ---------- infrastructure ----------
   postgres:
     image: postgres:16-alpine
     container_name: ecommerce-postgres
@@ -81,9 +103,173 @@ services:
       - "8082:80"       # UI (sent mails)
       - "2525:25"       # SMTP
 
+  jaeger:
+    image: jaegertracing/all-in-one:1.60
+    container_name: ecommerce-jaeger
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686"   # UI
+      - "4317:4317"     # OTLP gRPC
+      - "4318:4318"     # OTLP HTTP
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: ecommerce-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: ecommerce-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+
+  # ---------- application services (docker compose --profile app up) ----------
+  identity-api:
+    <<: *app-defaults
+    build:
+      context: .
+      dockerfile: src/Services/Identity/Identity.Api/Dockerfile
+    container_name: ecommerce-identity-api
+    environment:
+      <<: *service-env
+      ConnectionStrings__IdentityDb: Host=postgres;Port=5432;Database=identity_db;Username=postgres;Password=postgres
+    ports:
+      - "5001:8080"
+
+  gateway-api:
+    <<: *app-defaults
+    build:
+      context: .
+      dockerfile: src/ApiGateway/Gateway.Api/Dockerfile
+    container_name: ecommerce-gateway-api
+    environment:
+      <<: *service-env
+      ReverseProxy__Clusters__identity__Destinations__d1__Address: http://identity-api:8080/
+      ReverseProxy__Clusters__catalog__Destinations__d1__Address: http://catalog-api:8080/
+      ReverseProxy__Clusters__search__Destinations__d1__Address: http://search-api:8080/
+      ReverseProxy__Clusters__basket__Destinations__d1__Address: http://basket-api:8080/
+      ReverseProxy__Clusters__ordering__Destinations__d1__Address: http://ordering-api:8080/
+      ReverseProxy__Clusters__inventory__Destinations__d1__Address: http://inventory-api:8080/
+      ReverseProxy__Clusters__notification__Destinations__d1__Address: http://notification-api:8080/
+      HealthChecksUI__HealthChecks__0__Uri: http://gateway-api:8080/health
+      HealthChecksUI__HealthChecks__1__Uri: http://identity-api:8080/health
+      HealthChecksUI__HealthChecks__2__Uri: http://catalog-api:8080/health
+      HealthChecksUI__HealthChecks__3__Uri: http://search-api:8080/health
+      HealthChecksUI__HealthChecks__4__Uri: http://basket-api:8080/health
+      HealthChecksUI__HealthChecks__5__Uri: http://ordering-api:8080/health
+      HealthChecksUI__HealthChecks__6__Uri: http://inventory-api:8080/health
+      HealthChecksUI__HealthChecks__7__Uri: http://payment-api:8080/health
+      HealthChecksUI__HealthChecks__8__Uri: http://notification-api:8080/health
+    ports:
+      - "5000:8080"
+
+  catalog-api:
+    <<: *app-defaults
+    build:
+      context: .
+      dockerfile: src/Services/Catalog/Catalog.Api/Dockerfile
+    container_name: ecommerce-catalog-api
+    environment:
+      <<: *service-env
+      ConnectionStrings__CatalogDb: Host=postgres;Port=5432;Database=catalog_db;Username=postgres;Password=postgres
+      ConnectionStrings__Redis: redis:6379
+    ports:
+      - "5002:8080"
+
+  search-api:
+    <<: *app-defaults
+    build:
+      context: .
+      dockerfile: src/Services/Search/Search.Api/Dockerfile
+    container_name: ecommerce-search-api
+    environment:
+      <<: *service-env
+      Elasticsearch__Url: http://elasticsearch:9200
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    ports:
+      - "5003:8080"
+
+  basket-api:
+    <<: *app-defaults
+    build:
+      context: .
+      dockerfile: src/Services/Basket/Basket.Api/Dockerfile
+    container_name: ecommerce-basket-api
+    environment:
+      <<: *service-env
+      ConnectionStrings__Redis: redis:6379
+    ports:
+      - "5004:8080"
+
+  ordering-api:
+    <<: *app-defaults
+    build:
+      context: .
+      dockerfile: src/Services/Ordering/Ordering.Api/Dockerfile
+    container_name: ecommerce-ordering-api
+    environment:
+      <<: *service-env
+      ConnectionStrings__OrderingDb: Host=postgres;Port=5432;Database=ordering_db;Username=postgres;Password=postgres
+    ports:
+      - "5005:8080"
+
+  inventory-api:
+    <<: *app-defaults
+    build:
+      context: .
+      dockerfile: src/Services/Inventory/Inventory.Api/Dockerfile
+    container_name: ecommerce-inventory-api
+    environment:
+      <<: *service-env
+      ConnectionStrings__InventoryDb: Host=postgres;Port=5432;Database=inventory_db;Username=postgres;Password=postgres
+    ports:
+      - "5006:8080"
+
+  payment-api:
+    <<: *app-defaults
+    build:
+      context: .
+      dockerfile: src/Services/Payment/Payment.Api/Dockerfile
+    container_name: ecommerce-payment-api
+    environment:
+      <<: *service-env
+      ConnectionStrings__PaymentDb: Host=postgres;Port=5432;Database=payment_db;Username=postgres;Password=postgres
+    ports:
+      - "5007:8080"
+
+  notification-api:
+    <<: *app-defaults
+    build:
+      context: .
+      dockerfile: src/Services/Notification/Notification.Api/Dockerfile
+    container_name: ecommerce-notification-api
+    environment:
+      <<: *service-env
+      Smtp__Host: smtp4dev
+      Smtp__Port: "25"
+    ports:
+      - "5008:8080"
+
 volumes:
   postgres-data:
   redis-data:
   rabbitmq-data:
   es-data:
   seq-data:
+  grafana-data:

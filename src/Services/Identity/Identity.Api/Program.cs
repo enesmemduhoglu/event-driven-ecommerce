@@ -16,7 +16,9 @@ builder.UseSharedSerilog("identity-api");
 builder.Services.AddControllers();
 builder.Services.AddIdentityInfrastructure(builder.Configuration);
 builder.Services.AddSwaggerWithJwt("Identity API");
-builder.Services.AddHealthChecks();
+builder.Services.AddSharedTelemetry(builder.Configuration, "identity-api");
+builder.Services.AddHealthChecks()
+    .AddNpgSql(builder.Configuration.GetConnectionString("IdentityDb")!, name: "postgres");
 
 // Identity validates its own tokens with the local signing key directly —
 // no HTTP round-trip to its own JWKS endpoint.
@@ -52,7 +54,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapHealthChecks("/health");
+app.MapObservabilityEndpoints();
 
 // OIDC discovery + JWKS so every other service can validate RS256 tokens
 // with the public key, without sharing any secret.

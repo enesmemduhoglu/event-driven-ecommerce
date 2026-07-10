@@ -10,6 +10,8 @@
     <PackageReference Include="StackExchange.Redis" />
     <PackageReference Include="MassTransit.RabbitMQ" />
     <PackageReference Include="Swashbuckle.AspNetCore" />
+    <PackageReference Include="AspNetCore.HealthChecks.Redis" />
+    <PackageReference Include="AspNetCore.HealthChecks.Rabbitmq" />
   </ItemGroup>
 
 </Project>

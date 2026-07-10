@@ -1,0 +1,33 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  # Services running as compose containers (docker compose --profile app up)
+  - job_name: services
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - gateway-api:8080
+          - identity-api:8080
+          - catalog-api:8080
+          - search-api:8080
+          - basket-api:8080
+          - ordering-api:8080
+          - inventory-api:8080
+          - payment-api:8080
+          - notification-api:8080
+
+  # Services running on the host with `dotnet run` (local development)
+  - job_name: services-local
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - host.docker.internal:5000
+          - host.docker.internal:5001
+          - host.docker.internal:5002
+          - host.docker.internal:5003
+          - host.docker.internal:5004
+          - host.docker.internal:5005
+          - host.docker.internal:5006
+          - host.docker.internal:5007
+          - host.docker.internal:5008

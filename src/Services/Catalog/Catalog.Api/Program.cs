@@ -15,7 +15,13 @@ builder.Services.AddControllers();
 builder.Services.AddCatalogInfrastructure(builder.Configuration);
 builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddSwaggerWithJwt("Catalog API");
-builder.Services.AddHealthChecks();
+builder.Services.AddSharedTelemetry(builder.Configuration, "catalog-api");
+
+var rabbitHealthCs = $"amqp://{builder.Configuration["RabbitMq:Username"] ?? "guest"}:{builder.Configuration["RabbitMq:Password"] ?? "guest"}@{builder.Configuration["RabbitMq:Host"] ?? "localhost"}:5672/";
+builder.Services.AddHealthChecks()
+    .AddNpgSql(builder.Configuration.GetConnectionString("CatalogDb")!, name: "postgres")
+    .AddRedis(builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379", name: "redis")
+    .AddRabbitMQ(rabbitConnectionString: rabbitHealthCs, name: "rabbitmq");
 
 builder.Services.AddStackExchangeRedisCache(options =>
     options.Configuration = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379");
@@ -58,7 +64,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapHealthChecks("/health");
+app.MapObservabilityEndpoints();
 
 await CatalogDbSeeder.SeedAsync(app.Services);
 

@@ -1,0 +1,12 @@
+**/bin/
+**/obj/
+**/.vs/
+.git/
+.gitignore
+docs/
+tests/
+requests/
+scripts/
+keys/
+**/*.md
+docker-compose*.yml

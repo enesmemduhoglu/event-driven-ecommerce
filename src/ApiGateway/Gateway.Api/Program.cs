@@ -27,7 +27,15 @@ builder.Services.AddRateLimiter(options =>
             }));
 });
 
+builder.Services.AddSharedTelemetry(builder.Configuration, "gateway-api");
 builder.Services.AddHealthChecks();
+
+// Single pane of glass over every service's /health endpoint.
+builder.Services.AddHealthChecksUI(options =>
+{
+    options.SetEvaluationTimeInSeconds(15);
+    options.MaximumHistoryEntriesPerEndpoint(50);
+}).AddInMemoryStorage();
 
 var app = builder.Build();
 
@@ -39,7 +47,8 @@ app.MapGet("/", () => Results.Json(new
     service = "E-Commerce API Gateway",
     routes = new[] { "/api/auth", "/api/products", "/api/categories", "/api/search", "/api/basket", "/api/orders", "/api/inventory", "/hubs/notifications" }
 }));
-app.MapHealthChecks("/health");
+app.MapObservabilityEndpoints();
+app.MapHealthChecksUI(options => options.UIPath = "/healthchecks-ui");
 
 app.MapReverseProxy();
 

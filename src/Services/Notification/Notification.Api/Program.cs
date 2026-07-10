@@ -16,7 +16,11 @@ builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<IUserIdProvider, SubClaimUserIdProvider>();
 builder.Services.AddSingleton<EmailSender>();
-builder.Services.AddHealthChecks();
+builder.Services.AddSharedTelemetry(builder.Configuration, "notification-api");
+
+var rabbitHealthCs = $"amqp://{builder.Configuration["RabbitMq:Username"] ?? "guest"}:{builder.Configuration["RabbitMq:Password"] ?? "guest"}@{builder.Configuration["RabbitMq:Host"] ?? "localhost"}:5672/";
+builder.Services.AddHealthChecks()
+    .AddRabbitMQ(rabbitConnectionString: rabbitHealthCs, name: "rabbitmq");
 
 builder.Services.AddMassTransit(x =>
 {
@@ -47,6 +51,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapHub<NotificationHub>("/hubs/notifications");
-app.MapHealthChecks("/health");
+app.MapObservabilityEndpoints();
 
 app.Run();
