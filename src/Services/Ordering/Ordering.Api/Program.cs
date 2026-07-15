@@ -20,10 +20,8 @@ builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddSwaggerWithJwt("Ordering API");
 builder.Services.AddSharedTelemetry(builder.Configuration, "ordering-api");
 
-var rabbitHealthCs = $"amqp://{builder.Configuration["RabbitMq:Username"] ?? "guest"}:{builder.Configuration["RabbitMq:Password"] ?? "guest"}@{builder.Configuration["RabbitMq:Host"] ?? "localhost"}:5672/";
 builder.Services.AddHealthChecks()
-    .AddNpgSql(builder.Configuration.GetConnectionString("OrderingDb")!, name: "postgres")
-    .AddRabbitMQ(rabbitConnectionString: rabbitHealthCs, name: "rabbitmq");
+    .AddNpgSql(builder.Configuration.GetConnectionString("OrderingDb")!, name: "postgres");
 
 builder.Services.AddMassTransit(x =>
 {

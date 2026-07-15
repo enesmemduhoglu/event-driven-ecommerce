@@ -26,7 +26,9 @@ public class RedisBasketRepository : IBasketRepository
     public async Task<CustomerBasket?> GetAsync(string userId)
     {
         var value = await _database.StringGetAsync(Key(userId));
-        return value.IsNullOrEmpty ? null : JsonSerializer.Deserialize<CustomerBasket>(value!);
+        // explicit cast: RedisValue -> string; C# 14 span conversions otherwise make
+        // the Deserialize(string)/Deserialize(ReadOnlySpan<byte>) overloads ambiguous
+        return value.IsNullOrEmpty ? null : JsonSerializer.Deserialize<CustomerBasket>((string)value!);
     }
 
     public async Task<CustomerBasket> SaveAsync(CustomerBasket basket)

@@ -17,11 +17,9 @@ builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddSwaggerWithJwt("Catalog API");
 builder.Services.AddSharedTelemetry(builder.Configuration, "catalog-api");
 
-var rabbitHealthCs = $"amqp://{builder.Configuration["RabbitMq:Username"] ?? "guest"}:{builder.Configuration["RabbitMq:Password"] ?? "guest"}@{builder.Configuration["RabbitMq:Host"] ?? "localhost"}:5672/";
 builder.Services.AddHealthChecks()
     .AddNpgSql(builder.Configuration.GetConnectionString("CatalogDb")!, name: "postgres")
-    .AddRedis(builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379", name: "redis")
-    .AddRabbitMQ(rabbitConnectionString: rabbitHealthCs, name: "rabbitmq");
+    .AddRedis(builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379", name: "redis");
 
 builder.Services.AddStackExchangeRedisCache(options =>
     options.Configuration = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379");

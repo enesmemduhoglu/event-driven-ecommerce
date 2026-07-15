@@ -20,6 +20,12 @@ x-app-defaults: &app-defaults
       condition: service_healthy
     redis:
       condition: service_healthy
+  healthcheck:
+    test: ["CMD-SHELL", "curl -fsS http://localhost:8080/health || exit 1"]
+    interval: 15s
+    timeout: 10s
+    retries: 5
+    start_period: 30s
 
 services:
   # ---------- infrastructure ----------

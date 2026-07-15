@@ -13,7 +13,6 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
     <PackageReference Include="AspNetCore.HealthChecks.NpgSql" />
     <PackageReference Include="AspNetCore.HealthChecks.Redis" />
-    <PackageReference Include="AspNetCore.HealthChecks.Rabbitmq" />
   </ItemGroup>
 
 </Project>

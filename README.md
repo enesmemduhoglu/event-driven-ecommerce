@@ -37,6 +37,8 @@ dotnet run --project src/ApiGateway/Gateway.Api --launch-profile http
 
 > **Not:** Compose, Postgres'i host'ta **5433** portuna açar (lokal Windows Postgres kurulumlarıyla çakışmamak için). Container içi iletişim 5432 üzerinden yürür.
 
+Tüm uygulama container'larında `/health` endpoint'ine bağlı compose healthcheck tanımlıdır; `docker compose ps` çıktısında her servisin `healthy` durumuna geçmesi beklenir (ilk açılışta migration'lar nedeniyle ~30-60 sn sürebilir).
+
 ## Demo Senaryosu
 
 ```bash
