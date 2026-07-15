@@ -1,0 +1,14 @@
+# Shared app configuration — the K8s counterpart of x-service-env in docker-compose.yml.
+# Seq/OTLP endpoints are intentionally absent: the observability stack stays compose-only;
+# the exporters degrade gracefully when their targets are unreachable.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: shared-config
+  namespace: ecommerce
+data:
+  ASPNETCORE_ENVIRONMENT: Development
+  RabbitMq__Host: rabbitmq
+  Jwt__Authority: http://identity-api:8080
+  Jwt__Issuer: http://identity-api:8080
+  Jwt__Audience: ecommerce

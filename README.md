@@ -103,6 +103,28 @@ GitHub Actions (`.github/workflows/ci.yml`), her push/PR'da üç aşama çalış
 3. **docker-publish** — yalnız `master`'a push'ta: 9 servisin image'ı GHCR'a yayınlanır
    (`ghcr.io/enesmemduhoglu/event-driven-ecommerce/<servis>:latest` ve `:sha-<commit>`)
 
+## Kubernetes
+
+`k8s/` altında düz YAML manifest'ler bulunur: çekirdek altyapı (Postgres + PVC, Redis, RabbitMQ, Elasticsearch, smtp4dev) ve 9 uygulama servisi (Deployment + Service, `/health` readiness probe'ları). Observability yığını (Seq, Jaeger, Prometheus, Grafana) compose'a özgüdür, K8s kapsamına alınmamıştır.
+
+```bash
+# Lokal bir cluster gerekir (Docker Desktop Kubernetes, kind veya minikube)
+kubectl apply -f k8s/namespace.yaml
+kubectl apply -R -f k8s/
+
+# Durumu izle (ilk açılışta migration + RabbitMQ beklerken birkaç restart normaldir)
+kubectl get pods -n ecommerce -w
+
+# Gateway dışarıya NodePort 30080 ile açılır (docker-desktop'ta doğrudan localhost)
+curl http://localhost:30080/health
+```
+
+Notlar:
+
+- Image'lar CI'ın yayınladığı `ghcr.io/enesmemduhoglu/event-driven-ecommerce/<servis>:latest` adreslerinden çekilir. GHCR paketleri private ise cluster'a bir `imagePullSecret` tanımlamanız ya da paketleri public yapmanız gerekir. Alternatif: image'ları lokalde build edip (`docker compose --profile app build`) `ghcr.io/...` adlarıyla etiketleyin; docker-desktop image deposunu cluster'la paylaşır, kind'da `kind load docker-image` kullanın.
+- `k8s/config/secrets.yaml` demo amaçlı düz kimlik bilgileri içerir — gerçek bir ortamda secret manager kullanın ve bu dosyayı commit'lemeyin.
+- Kalıcılık yalnız Postgres'te (PVC); Redis/RabbitMQ/Elasticsearch `emptyDir` kullanır, pod silinince veri gider.
+
 ## Teknolojiler
 
 .NET 8 · MassTransit 8.4 · RabbitMQ · PostgreSQL · Redis · Elasticsearch · YARP · ASP.NET Core Identity (RS256 + JWKS) · SignalR · Serilog + Seq · OpenTelemetry + Jaeger · Prometheus + Grafana · xUnit + Testcontainers

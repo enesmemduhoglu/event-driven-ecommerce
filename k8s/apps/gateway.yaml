@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway-api
+  namespace: ecommerce
+  labels:
+    app: gateway-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway-api
+  template:
+    metadata:
+      labels:
+        app: gateway-api
+    spec:
+      containers:
+        - name: gateway-api
+          image: ghcr.io/enesmemduhoglu/event-driven-ecommerce/gateway-api:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: shared-config
+          env:
+            # K8s Service DNS names match the compose service names, so the
+            # cluster destinations are identical to docker-compose.yml.
+            - name: ReverseProxy__Clusters__identity__Destinations__d1__Address
+              value: http://identity-api:8080/
+            - name: ReverseProxy__Clusters__catalog__Destinations__d1__Address
+              value: http://catalog-api:8080/
+            - name: ReverseProxy__Clusters__search__Destinations__d1__Address
+              value: http://search-api:8080/
+            - name: ReverseProxy__Clusters__basket__Destinations__d1__Address
+              value: http://basket-api:8080/
+            - name: ReverseProxy__Clusters__ordering__Destinations__d1__Address
+              value: http://ordering-api:8080/
+            - name: ReverseProxy__Clusters__inventory__Destinations__d1__Address
+              value: http://inventory-api:8080/
+            - name: ReverseProxy__Clusters__notification__Destinations__d1__Address
+              value: http://notification-api:8080/
+            - name: HealthChecksUI__HealthChecks__0__Uri
+              value: http://gateway-api:8080/health
+            - name: HealthChecksUI__HealthChecks__1__Uri
+              value: http://identity-api:8080/health
+            - name: HealthChecksUI__HealthChecks__2__Uri
+              value: http://catalog-api:8080/health
+            - name: HealthChecksUI__HealthChecks__3__Uri
+              value: http://search-api:8080/health
+            - name: HealthChecksUI__HealthChecks__4__Uri
+              value: http://basket-api:8080/health
+            - name: HealthChecksUI__HealthChecks__5__Uri
+              value: http://ordering-api:8080/health
+            - name: HealthChecksUI__HealthChecks__6__Uri
+              value: http://inventory-api:8080/health
+            - name: HealthChecksUI__HealthChecks__7__Uri
+              value: http://payment-api:8080/health
+            - name: HealthChecksUI__HealthChecks__8__Uri
+              value: http://notification-api:8080/health
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 12
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 20
+---
+# NodePort: the single entry point from outside the cluster.
+# http://localhost:30080 on docker-desktop; use the node IP on kind/minikube.
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway-api
+  namespace: ecommerce
+spec:
+  type: NodePort
+  selector:
+    app: gateway-api
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30080
