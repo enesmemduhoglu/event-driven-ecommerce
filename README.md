@@ -1,5 +1,7 @@
 # Event-Driven E-Ticaret Platformu
 
+[![CI](https://github.com/enesmemduhoglu/event-driven-ecommerce/actions/workflows/ci.yml/badge.svg)](https://github.com/enesmemduhoglu/event-driven-ecommerce/actions/workflows/ci.yml)
+
 .NET 8 üzerinde, mesajlaşma temelli (event-driven) bir e-ticaret backend'i. 9 mikroservis; MassTransit + RabbitMQ ile haberleşir, sipariş yaşam döngüsünü **saga orkestrasyon** yönetir, veri tutarlılığı **transactional outbox** ile sağlanır.
 
 > Mimari detaylar ve tasarım kararları için: [docs/architecture.md](docs/architecture.md)
@@ -91,6 +93,15 @@ Tek komutla tüm stack'i ayağa kaldırıp sağlık kontrollerini ve sipariş ak
 ```
 
 Script Windows PowerShell 5.1 ve pwsh (Linux/CI) ile çalışır; başarısızlıkta ilgili servisin son 50 log satırını basar ve sıfır dışı exit code döner.
+
+## CI/CD
+
+GitHub Actions (`.github/workflows/ci.yml`), her push/PR'da üç aşama çalıştırır:
+
+1. **build-test** — `dotnet build` + `dotnet test` (Testcontainers entegrasyon testleri dahil; runner'daki Docker kullanılır)
+2. **smoke** — `smoke-test.ps1 -Build -Down`: tüm stack compose ile ayağa kalkar, sağlık kontrolleri ve uçtan uca sipariş senaryoları koşar
+3. **docker-publish** — yalnız `master`'a push'ta: 9 servisin image'ı GHCR'a yayınlanır
+   (`ghcr.io/enesmemduhoglu/event-driven-ecommerce/<servis>:latest` ve `:sha-<commit>`)
 
 ## Teknolojiler
 
