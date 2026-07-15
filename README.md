@@ -80,6 +80,18 @@ dotnet test                      # 36 test: unit + saga + integration
 - ***.UnitTests** — domain kuralları, JWT üretimi/doğrulaması
 - **IntegrationTests** — Testcontainers (`Category=Integration`, Docker gerektirir): gerçek Postgres'te saga persistence, outbox atomikliği, Redis sepet, gerçek RabbitMQ üzerinden mesaj turu
 
+### Smoke test (uçtan uca)
+
+Tek komutla tüm stack'i ayağa kaldırıp sağlık kontrollerini ve sipariş akışı senaryolarını doğrular:
+
+```powershell
+./scripts/smoke-test.ps1                  # stack'i başlat, /health bekle, e2e senaryoları çalıştır
+./scripts/smoke-test.ps1 -Build           # önce image'ları yeniden build et
+./scripts/smoke-test.ps1 -Build -Down     # CI modu: sonunda stack'i volümleriyle indir
+```
+
+Script Windows PowerShell 5.1 ve pwsh (Linux/CI) ile çalışır; başarısızlıkta ilgili servisin son 50 log satırını basar ve sıfır dışı exit code döner.
+
 ## Teknolojiler
 
 .NET 8 · MassTransit 8.4 · RabbitMQ · PostgreSQL · Redis · Elasticsearch · YARP · ASP.NET Core Identity (RS256 + JWKS) · SignalR · Serilog + Seq · OpenTelemetry + Jaeger · Prometheus + Grafana · xUnit + Testcontainers

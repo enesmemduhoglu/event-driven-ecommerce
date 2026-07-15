@@ -23,8 +23,16 @@ function Assert($condition, $message) {
 Write-Host "== Login" -ForegroundColor Cyan
 $admin = Invoke-RestMethod "$gateway/api/auth/login" -Method Post -ContentType 'application/json' `
     -Body '{"email":"admin@ecommerce.dev","password":"Admin123!"}'
-$user = Invoke-RestMethod "$gateway/api/auth/login" -Method Post -ContentType 'application/json' `
-    -Body '{"email":"test@example.com","password":"Test1234!"}'
+# only the admin account is seeded; register the customer on first run (fresh db)
+try {
+    $user = Invoke-RestMethod "$gateway/api/auth/login" -Method Post -ContentType 'application/json' `
+        -Body '{"email":"test@example.com","password":"Test1234!"}'
+} catch {
+    Invoke-RestMethod "$gateway/api/auth/register" -Method Post -ContentType 'application/json' `
+        -Body '{"email":"test@example.com","password":"Test1234!","firstName":"Test","lastName":"User"}' | Out-Null
+    $user = Invoke-RestMethod "$gateway/api/auth/login" -Method Post -ContentType 'application/json' `
+        -Body '{"email":"test@example.com","password":"Test1234!"}'
+}
 $adminHeaders = @{ Authorization = "Bearer $($admin.accessToken)" }
 $userHeaders = @{ Authorization = "Bearer $($user.accessToken)" }
 
