@@ -12,6 +12,10 @@ import { Register } from '@/pages/Register'
 import { ProductList } from '@/pages/ProductList'
 import { ProductDetail } from '@/pages/ProductDetail'
 import { SearchResults } from '@/pages/SearchResults'
+import { Basket } from '@/pages/Basket'
+import { Checkout } from '@/pages/Checkout'
+import { Orders } from '@/pages/Orders'
+import { OrderDetail } from '@/pages/OrderDetail'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,7 +43,10 @@ const router = createBrowserRouter([
       {
         element: <RequireAuth />,
         children: [
-          // Phase 11.3: /basket, /checkout, /orders, /orders/:id
+          { path: '/basket', element: <Basket /> },
+          { path: '/checkout', element: <Checkout /> },
+          { path: '/orders', element: <Orders /> },
+          { path: '/orders/:id', element: <OrderDetail /> },
         ],
       },
       {

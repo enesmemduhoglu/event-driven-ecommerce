@@ -1,10 +1,15 @@
-import { useQuery } from '@tanstack/react-query'
-import { Link, useParams } from 'react-router-dom'
+import { useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { catalogApi } from '@/api/catalog'
 import { inventoryApi } from '@/api/inventory'
+import { basketApi } from '@/api/basket'
 import { ApiError } from '@/api/http'
+import { useAuth } from '@/auth/AuthContext'
 import { Money } from '@/components/Money'
 import { Spinner } from '@/components/Spinner'
+import { useToast } from '@/components/Toaster'
+import type { ProductDto } from '@/api/types'
 
 function StockInfo({ productId }: { productId: string }) {
   const stock = useQuery({
@@ -26,6 +31,62 @@ function StockInfo({ productId }: { productId: string }) {
     </span>
   ) : (
     <span className="text-sm font-medium text-red-600">Stokta yok</span>
+  )
+}
+
+function AddToBasket({ product }: { product: ProductDto }) {
+  const { status } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
+  const [quantity, setQuantity] = useState(1)
+
+  const addItem = useMutation({
+    mutationFn: () =>
+      basketApi.addItem({
+        productId: product.id,
+        productName: product.name,
+        unitPrice: product.price,
+        quantity,
+      }),
+    onSuccess: (basket) => {
+      queryClient.setQueryData(['basket'], basket)
+      toast(`${product.name} sepete eklendi`, 'success')
+    },
+    onError: (err) => toast(err.message, 'error'),
+  })
+
+  function onClick() {
+    if (status !== 'authenticated') {
+      navigate('/login', { state: { from: location.pathname } })
+      return
+    }
+    addItem.mutate()
+  }
+
+  return (
+    <div className="flex items-center gap-3">
+      <select
+        value={quantity}
+        onChange={(e) => setQuantity(Number(e.target.value))}
+        className="rounded-md border border-gray-300 bg-white px-2 py-2 text-sm"
+        aria-label="Adet"
+      >
+        {[1, 2, 3, 4, 5].map((n) => (
+          <option key={n} value={n}>
+            {n} adet
+          </option>
+        ))}
+      </select>
+      <button
+        onClick={onClick}
+        disabled={addItem.isPending}
+        className="rounded-md bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+      >
+        {addItem.isPending ? 'Ekleniyor…' : 'Sepete Ekle'}
+      </button>
+    </div>
   )
 }
 
@@ -71,7 +132,7 @@ export function ProductDetail() {
 
         <div className="mt-6 flex items-center justify-between border-t border-gray-100 pt-4">
           <StockInfo productId={p.id} />
-          {/* Phase 11.3: Sepete Ekle butonu */}
+          <AddToBasket product={p} />
         </div>
       </div>
     </div>
