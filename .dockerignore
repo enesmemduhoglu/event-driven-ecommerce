@@ -10,3 +10,5 @@ scripts/
 keys/
 **/*.md
 docker-compose*.yml
+**/node_modules/
+src/Web/dist/

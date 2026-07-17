@@ -9,6 +9,18 @@ builder.UseSharedSerilog("gateway-api");
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 
+// Browser SPA'sı (src/Web) gateway'e cross-origin istek atar; SignalR negotiate
+// credential gerektirdiği için origin listesi explicit olmak zorunda.
+const string webCorsPolicy = "web-client";
+var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+    ?? ["http://localhost:5173"];
+
+builder.Services.AddCors(options => options.AddPolicy(webCorsPolicy, policy => policy
+    .WithOrigins(corsOrigins)
+    .AllowAnyHeader()
+    .AllowAnyMethod()
+    .AllowCredentials()));
+
 // Fixed-window rate limiting partitioned by client IP, applied to every proxied route.
 var permitLimit = builder.Configuration.GetValue("RateLimiting:PermitLimit", 100);
 var windowSeconds = builder.Configuration.GetValue("RateLimiting:WindowSeconds", 10);
@@ -40,6 +52,8 @@ builder.Services.AddHealthChecksUI(options =>
 var app = builder.Build();
 
 app.UseSerilogRequestLogging();
+// CORS, rate limiter'dan ÖNCE: preflight OPTIONS istekleri limit tüketmesin.
+app.UseCors(webCorsPolicy);
 app.UseRateLimiter();
 
 app.MapGet("/", () => Results.Json(new
