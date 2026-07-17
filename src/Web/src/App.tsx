@@ -9,6 +9,9 @@ import { RateLimitError } from '@/api/http'
 import { Home } from '@/pages/Home'
 import { Login } from '@/pages/Login'
 import { Register } from '@/pages/Register'
+import { ProductList } from '@/pages/ProductList'
+import { ProductDetail } from '@/pages/ProductDetail'
+import { SearchResults } from '@/pages/SearchResults'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,6 +31,9 @@ const router = createBrowserRouter([
     element: <Layout />,
     children: [
       { path: '/', element: <Home /> },
+      { path: '/products', element: <ProductList /> },
+      { path: '/products/:id', element: <ProductDetail /> },
+      { path: '/search', element: <SearchResults /> },
       { path: '/login', element: <Login /> },
       { path: '/register', element: <Register /> },
       {

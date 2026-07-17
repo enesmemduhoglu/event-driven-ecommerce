@@ -76,7 +76,8 @@ export interface CreateOrderRequest {
   cardNumber: string
 }
 
-export interface InventoryItemDto {
+export interface StockItemDto {
   productId: string
+  productName: string
   availableQuantity: number
 }
