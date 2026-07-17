@@ -9,8 +9,11 @@ import { Pagination } from '@/components/Pagination'
 import { ProductCard } from '@/components/ProductCard'
 import { Spinner } from '@/components/Spinner'
 
+import { btnOrange, card } from '@/components/ui'
+
 const PAGE_SIZE = 12
-const inputClass = 'rounded-md border border-gray-300 bg-white px-3 py-2 text-sm'
+const inputClass =
+  'rounded-md border border-gray-400 bg-white px-3 py-2 text-sm shadow-inner focus:border-[#e77600] focus:outline-none'
 
 export function SearchResults() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -54,10 +57,7 @@ export function SearchResults() {
     <div>
       <h1 className="mb-6 text-2xl font-bold">Ürün Arama</h1>
 
-      <form
-        onSubmit={onSubmit}
-        className="mb-6 flex flex-wrap items-end gap-3 rounded-xl border border-gray-200 bg-white p-4"
-      >
+      <form onSubmit={onSubmit} className={`${card} mb-6 flex flex-wrap items-end gap-3 p-4`}>
         <label className="flex-1">
           <span className="mb-1 block text-xs font-medium text-gray-600">Arama</span>
           <input
@@ -108,10 +108,7 @@ export function SearchResults() {
             <option value="price_desc">Fiyat (azalan)</option>
           </select>
         </label>
-        <button
-          type="submit"
-          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-        >
+        <button type="submit" className={btnOrange}>
           Ara
         </button>
       </form>
@@ -138,7 +135,7 @@ export function SearchResults() {
         <>
           <p className="mb-3 text-sm text-gray-500">{results.data.totalCount} sonuç bulundu</p>
           <div
-            className={`grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 ${
+            className={`grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4 ${
               results.isPlaceholderData ? 'opacity-60' : ''
             }`}
           >

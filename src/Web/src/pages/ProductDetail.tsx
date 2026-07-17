@@ -7,40 +7,47 @@ import { basketApi } from '@/api/basket'
 import { ApiError } from '@/api/http'
 import { useAuth } from '@/auth/AuthContext'
 import { Money } from '@/components/Money'
+import { ProductImage } from '@/components/ProductImage'
 import { Spinner } from '@/components/Spinner'
+import { Stars, pseudoRating } from '@/components/Stars'
 import { useToast } from '@/components/Toaster'
+import { btnPrimary, card, linkBlue } from '@/components/ui'
 import type { ProductDto } from '@/api/types'
 
-function StockInfo({ productId }: { productId: string }) {
-  const stock = useQuery({
+function useStock(productId: string) {
+  return useQuery({
     queryKey: ['inventory', productId],
     queryFn: () => inventoryApi.stock(productId),
     retry: false,
   })
+}
 
-  if (stock.isPending) return <span className="text-sm text-gray-400">Stok kontrol ediliyor…</span>
+function StockLine({ productId }: { productId: string }) {
+  const stock = useStock(productId)
+
+  if (stock.isPending) return <p className="text-sm text-gray-400">Stok kontrol ediliyor…</p>
   if (stock.isError) {
     // Seed edilmemiş ürün 404 döner — stok bilinmiyor.
-    if (stock.error instanceof ApiError && stock.error.status === 404)
-      return <span className="text-sm text-gray-400">Stok bilgisi yok</span>
-    return <span className="text-sm text-gray-400">Stok bilgisi alınamadı</span>
+    const notFound = stock.error instanceof ApiError && stock.error.status === 404
+    return (
+      <p className="text-sm text-gray-400">{notFound ? 'Stok bilgisi yok' : 'Stok bilgisi alınamadı'}</p>
+    )
   }
   return stock.data.availableQuantity > 0 ? (
-    <span className="text-sm font-medium text-emerald-600">
-      Stokta {stock.data.availableQuantity} adet
-    </span>
+    <p className="text-lg font-semibold text-[#007600]">Stokta var</p>
   ) : (
-    <span className="text-sm font-medium text-red-600">Stokta yok</span>
+    <p className="text-lg font-semibold text-[#b12704]">Stokta yok</p>
   )
 }
 
-function AddToBasket({ product }: { product: ProductDto }) {
+function BuyBox({ product }: { product: ProductDto }) {
   const { status } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const queryClient = useQueryClient()
   const { toast } = useToast()
   const [quantity, setQuantity] = useState(1)
+  const stock = useStock(product.id)
 
   const addItem = useMutation({
     mutationFn: () =>
@@ -65,27 +72,39 @@ function AddToBasket({ product }: { product: ProductDto }) {
     addItem.mutate()
   }
 
+  const outOfStock = stock.data ? stock.data.availableQuantity <= 0 : false
+
   return (
-    <div className="flex items-center gap-3">
-      <select
-        value={quantity}
-        onChange={(e) => setQuantity(Number(e.target.value))}
-        className="rounded-md border border-gray-300 bg-white px-2 py-2 text-sm"
-        aria-label="Adet"
-      >
-        {[1, 2, 3, 4, 5].map((n) => (
-          <option key={n} value={n}>
-            {n} adet
-          </option>
-        ))}
-      </select>
+    <div className={`${card} h-fit w-full shrink-0 p-4 lg:w-64`}>
+      <Money amount={product.price} className="text-2xl font-semibold text-[#b12704]" />
+      <p className="mt-1 text-xs text-gray-500">Kargo bedava — demo mağaza</p>
+      <div className="mt-3">
+        <StockLine productId={product.id} />
+      </div>
+      <label className="mt-3 block text-sm">
+        <span className="mb-1 block text-gray-600">Adet</span>
+        <select
+          value={quantity}
+          onChange={(e) => setQuantity(Number(e.target.value))}
+          className="w-full rounded-md border border-gray-300 bg-[#f0f2f2] px-2 py-1.5 shadow-sm"
+        >
+          {[1, 2, 3, 4, 5].map((n) => (
+            <option key={n} value={n}>
+              {n}
+            </option>
+          ))}
+        </select>
+      </label>
       <button
         onClick={onClick}
-        disabled={addItem.isPending}
-        className="rounded-md bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+        disabled={addItem.isPending || outOfStock}
+        className={`${btnPrimary} mt-4 w-full`}
       >
         {addItem.isPending ? 'Ekleniyor…' : 'Sepete Ekle'}
       </button>
+      <p className="mt-3 text-xs text-gray-500">
+        Satıcı: <span className={linkBlue}>e-ticaret.dev</span>
+      </p>
     </div>
   )
 }
@@ -107,33 +126,48 @@ export function ProductDetail() {
     )
 
   const p = product.data
+  const { rating } = pseudoRating(p.id)
+
   return (
-    <div className="mx-auto max-w-3xl">
-      <nav className="mb-4 text-sm text-gray-500">
-        <Link to="/products" className="hover:text-indigo-600">
+    <div>
+      <nav className="mb-3 text-sm text-gray-500">
+        <Link to="/products" className={linkBlue}>
           Ürünler
         </Link>
-        {' / '}
-        <Link to={`/products?categoryId=${p.categoryId}`} className="hover:text-indigo-600">
+        {' › '}
+        <Link to={`/products?categoryId=${p.categoryId}`} className={linkBlue}>
           {p.categoryName}
         </Link>
+        {' › '}
+        <span>{p.name}</span>
       </nav>
 
-      <div className="rounded-xl border border-gray-200 bg-white p-8">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold">{p.name}</h1>
-            <p className="mt-1 text-sm text-gray-500">{p.categoryName}</p>
+      <div className={`${card} flex flex-col gap-6 p-6 lg:flex-row`}>
+        <ProductImage
+          productId={p.id}
+          name={p.name}
+          categoryName={p.categoryName}
+          className="aspect-square w-full max-w-md self-center rounded-lg lg:self-start"
+          emojiClassName="text-9xl"
+        />
+
+        <div className="min-w-0 flex-1">
+          <h1 className="text-2xl font-semibold">{p.name}</h1>
+          <p className={`mt-0.5 text-sm ${linkBlue}`}>{p.categoryName}</p>
+          <div className="mt-1 flex items-center gap-2">
+            <span className="text-sm text-[#c45500]">{rating.toFixed(1)}</span>
+            <Stars id={p.id} />
           </div>
-          <Money amount={p.price} className="text-2xl font-bold text-indigo-700" />
+          <hr className="my-4 border-gray-200" />
+          <Money amount={p.price} className="text-xl font-semibold text-[#b12704]" />
+          <h2 className="mt-4 font-bold">Ürün Açıklaması</h2>
+          <p className="mt-1 whitespace-pre-line text-sm text-gray-700">{p.description}</p>
+          <p className="mt-4 text-xs text-gray-400">
+            Eklenme: {new Date(p.createdAtUtc).toLocaleDateString('tr-TR')}
+          </p>
         </div>
 
-        <p className="mt-4 whitespace-pre-line text-gray-700">{p.description}</p>
-
-        <div className="mt-6 flex items-center justify-between border-t border-gray-100 pt-4">
-          <StockInfo productId={p.id} />
-          <AddToBasket product={p} />
-        </div>
+        <BuyBox product={p} />
       </div>
     </div>
   )

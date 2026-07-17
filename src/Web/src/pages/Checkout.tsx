@@ -9,8 +9,7 @@ import { Money } from '@/components/Money'
 import { Spinner } from '@/components/Spinner'
 import { useToast } from '@/components/Toaster'
 
-const inputClass =
-  'w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none'
+import { btnPrimary, card, input as inputClass, linkBlue } from '@/components/ui'
 
 export function Checkout() {
   const navigate = useNavigate()
@@ -50,7 +49,7 @@ export function Checkout() {
       <div className="py-16 text-center">
         <h1 className="text-2xl font-bold">Sepetiniz boş</h1>
         <p className="mt-2 text-gray-500">Sipariş verebilmek için önce sepete ürün ekleyin.</p>
-        <Link to="/products" className="mt-4 inline-block text-indigo-600 hover:underline">
+        <Link to="/products" className={`mt-4 inline-block ${linkBlue}`}>
           Ürünlere göz at →
         </Link>
       </div>
@@ -74,7 +73,7 @@ export function Checkout() {
     <div className="mx-auto max-w-2xl">
       <h1 className="mb-6 text-2xl font-bold">Siparişi Tamamla</h1>
 
-      <div className="mb-6 rounded-xl border border-gray-200 bg-white p-4">
+      <div className={`${card} mb-6 p-4`}>
         <h2 className="mb-3 font-semibold">Sipariş Özeti</h2>
         <ul className="space-y-1 text-sm text-gray-700">
           {b.items.map((item) => (
@@ -92,7 +91,7 @@ export function Checkout() {
         </div>
       </div>
 
-      <form onSubmit={onSubmit} className="space-y-4 rounded-xl border border-gray-200 bg-white p-6">
+      <form onSubmit={onSubmit} className={`${card} space-y-4 p-6`}>
         <label className="block">
           <span className="mb-1 block text-sm font-medium text-gray-700">Teslimat Adresi</span>
           <textarea
@@ -121,11 +120,7 @@ export function Checkout() {
             akışını (saga compensation) tetikler.
           </span>
         </label>
-        <button
-          type="submit"
-          disabled={createOrder.isPending}
-          className="w-full rounded-md bg-indigo-600 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-        >
+        <button type="submit" disabled={createOrder.isPending} className={`${btnPrimary} w-full`}>
           {createOrder.isPending ? 'Sipariş veriliyor…' : 'Siparişi Ver'}
         </button>
       </form>

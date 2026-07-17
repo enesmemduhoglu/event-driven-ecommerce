@@ -1,5 +1,5 @@
 @import "tailwindcss";
 
 body {
-  @apply bg-gray-50 text-gray-900 antialiased;
+  @apply bg-[#eaeded] text-gray-900 antialiased;
 }

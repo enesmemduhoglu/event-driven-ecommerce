@@ -4,6 +4,8 @@ import { ordersApi } from '@/api/orders'
 import { Money } from '@/components/Money'
 import { Spinner } from '@/components/Spinner'
 import { StatusBadge } from '@/components/StatusBadge'
+import { ProductImage } from '@/components/ProductImage'
+import { card, linkBlue } from '@/components/ui'
 
 export function OrderDetail() {
   const { id } = useParams<{ id: string }>()
@@ -27,14 +29,14 @@ export function OrderDetail() {
   return (
     <div className="mx-auto max-w-2xl">
       <nav className="mb-4 text-sm text-gray-500">
-        <Link to="/orders" className="hover:text-indigo-600">
+        <Link to="/orders" className={linkBlue}>
           Siparişlerim
         </Link>
-        {' / '}
+        {' › '}
         <span className="font-mono">#{o.id.slice(0, 8)}</span>
       </nav>
 
-      <div className="rounded-xl border border-gray-200 bg-white p-6">
+      <div className={`${card} p-6`}>
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-xl font-bold">Sipariş #{o.id.slice(0, 8)}</h1>
@@ -66,10 +68,16 @@ export function OrderDetail() {
         <h2 className="mt-6 mb-2 font-semibold">Ürünler</h2>
         <ul className="divide-y divide-gray-100 rounded-md border border-gray-100">
           {o.items.map((item) => (
-            <li key={item.productId} className="flex justify-between p-3 text-sm">
-              <span>
+            <li key={item.productId} className="flex items-center gap-3 p-3 text-sm">
+              <ProductImage
+                productId={item.productId}
+                name={item.productName}
+                className="size-12 rounded-md"
+                emojiClassName="text-xl"
+              />
+              <Link to={`/products/${item.productId}`} className={`flex-1 ${linkBlue}`}>
                 {item.productName} × {item.quantity}
-              </span>
+              </Link>
               <Money amount={item.unitPrice * item.quantity} />
             </li>
           ))}
