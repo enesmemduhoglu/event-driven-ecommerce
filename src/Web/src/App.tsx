@@ -12,10 +12,15 @@ import { Register } from '@/pages/Register'
 import { ProductList } from '@/pages/ProductList'
 import { ProductDetail } from '@/pages/ProductDetail'
 import { SearchResults } from '@/pages/SearchResults'
+import { Navigate } from 'react-router-dom'
 import { Basket } from '@/pages/Basket'
 import { Checkout } from '@/pages/Checkout'
 import { Orders } from '@/pages/Orders'
 import { OrderDetail } from '@/pages/OrderDetail'
+import { AdminLayout } from '@/pages/admin/AdminLayout'
+import { AdminProducts } from '@/pages/admin/AdminProducts'
+import { AdminProductForm } from '@/pages/admin/AdminProductForm'
+import { AdminCategories } from '@/pages/admin/AdminCategories'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -52,7 +57,17 @@ const router = createBrowserRouter([
       {
         element: <RequireRole role="Admin" />,
         children: [
-          // Phase 11.4: /admin/*
+          {
+            path: '/admin',
+            element: <AdminLayout />,
+            children: [
+              { index: true, element: <Navigate to="/admin/products" replace /> },
+              { path: 'products', element: <AdminProducts /> },
+              { path: 'products/new', element: <AdminProductForm /> },
+              { path: 'products/:id/edit', element: <AdminProductForm /> },
+              { path: 'categories', element: <AdminCategories /> },
+            ],
+          },
         ],
       },
     ],
