@@ -74,6 +74,24 @@ services:
       timeout: 10s
       retries: 10
 
+  minio:
+    image: minio/minio:latest
+    container_name: ecommerce-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"     # S3 API
+      - "9001:9001"     # console UI (minioadmin/minioadmin)
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.19.3
     container_name: ecommerce-elasticsearch
@@ -169,6 +187,7 @@ services:
       ReverseProxy__Clusters__ordering__Destinations__d1__Address: http://ordering-api:8080/
       ReverseProxy__Clusters__inventory__Destinations__d1__Address: http://inventory-api:8080/
       ReverseProxy__Clusters__notification__Destinations__d1__Address: http://notification-api:8080/
+      ReverseProxy__Clusters__minio__Destinations__d1__Address: http://minio:9000/
       HealthChecksUI__HealthChecks__0__Uri: http://gateway-api:8080/health
       HealthChecksUI__HealthChecks__1__Uri: http://identity-api:8080/health
       HealthChecksUI__HealthChecks__2__Uri: http://catalog-api:8080/health
@@ -187,10 +206,21 @@ services:
       context: .
       dockerfile: src/Services/Catalog/Catalog.Api/Dockerfile
     container_name: ecommerce-catalog-api
+    # Overrides the anchor's depends_on entirely: catalog also waits for MinIO.
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     environment:
       <<: *service-env
       ConnectionStrings__CatalogDb: Host=postgres;Port=5432;Database=catalog_db;Username=postgres;Password=postgres
       ConnectionStrings__Redis: redis:6379
+      ObjectStorage__ServiceUrl: http://minio:9000
     ports:
       - "5002:8080"
 
@@ -274,6 +304,7 @@ services:
 
 volumes:
   postgres-data:
+  minio-data:
   redis-data:
   rabbitmq-data:
   es-data:

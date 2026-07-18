@@ -2,6 +2,7 @@ using System.Text.Json;
 using BuildingBlocks.Common.Exceptions;
 using BuildingBlocks.Common.Models;
 using Catalog.Api.Models;
+using Catalog.Api.Services;
 using Catalog.Domain.Entities;
 using Catalog.Infrastructure.Data;
 using EventBus.Contracts.Catalog;
@@ -33,14 +34,14 @@ public class ProductsController : ControllerBase
     private readonly CatalogDbContext _dbContext;
     private readonly IPublishEndpoint _publishEndpoint;
     private readonly IDistributedCache _cache;
-    private readonly IWebHostEnvironment _environment;
+    private readonly IObjectStorage _storage;
 
-    public ProductsController(CatalogDbContext dbContext, IPublishEndpoint publishEndpoint, IDistributedCache cache, IWebHostEnvironment environment)
+    public ProductsController(CatalogDbContext dbContext, IPublishEndpoint publishEndpoint, IDistributedCache cache, IObjectStorage storage)
     {
         _dbContext = dbContext;
         _publishEndpoint = publishEndpoint;
         _cache = cache;
-        _environment = environment;
+        _storage = storage;
     }
 
     [HttpGet]
@@ -163,23 +164,17 @@ public class ProductsController : ControllerBase
 
         var product = await LoadProductAsync(id, track: true);
 
-        var webRoot = _environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot");
-        var dir = Path.Combine(webRoot, "images", "products");
-        Directory.CreateDirectory(dir);
+        // Timestamped key so a replacement never serves a stale browser-cached image.
+        await _storage.DeleteByPrefixAsync($"products/{id}-");
 
-        // Timestamped file name so a replacement never serves a stale browser-cached image.
-        foreach (var oldFile in Directory.EnumerateFiles(dir, $"{id}-*"))
+        var key = $"products/{id}-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}{extension}";
+        await using (var stream = file.OpenReadStream())
         {
-            System.IO.File.Delete(oldFile);
+            await _storage.UploadAsync(key, stream, file.ContentType);
         }
 
-        var fileName = $"{id}-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}{extension}";
-        await using (var stream = System.IO.File.Create(Path.Combine(dir, fileName)))
-        {
-            await file.CopyToAsync(stream);
-        }
-
-        product.SetImage($"/images/products/{fileName}");
+        // Gateway-relative: YARP maps /images/** onto the bucket.
+        product.SetImage($"/images/{key}");
 
         await _dbContext.SaveChangesAsync();
         await _cache.RemoveAsync(CacheKey(id));

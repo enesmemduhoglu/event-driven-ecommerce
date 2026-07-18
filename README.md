@@ -12,7 +12,7 @@
 |---|---|---|---|
 | Gateway.Api | Tek giriş noktası, YARP routing, IP bazlı rate limiting, HealthChecks UI | — | 5000 |
 | Identity.Api | Kayıt/giriş, RS256 JWT + refresh token rotasyonu, roller, JWKS | identity_db (Postgres) | 5001 |
-| Catalog.Api | Ürün/kategori CRUD, fiyat yönetimi, Redis cache, **outbox** ile event yayını | catalog_db (Postgres) | 5002 |
+| Catalog.Api | Ürün/kategori CRUD, fiyat yönetimi, görsel yükleme (S3/MinIO), Redis cache, **outbox** ile event yayını | catalog_db (Postgres) + MinIO | 5002 |
 | Search.Api | Tam metin arama/filtreleme; Catalog eventlerini dinleyip indeksler | Elasticsearch | 5003 |
 | Basket.Api | Sepet yönetimi (JWT kullanıcısına bağlı, 30 gün TTL) | Redis | 5004 |
 | Ordering.Api | Sipariş API'si + **Order Saga state machine** (EF Core'da persist) | ordering_db (Postgres) | 5005 |
@@ -25,7 +25,7 @@
 Önkoşullar: Docker Desktop, .NET 8 SDK.
 
 ```bash
-# 1) Altyapıyı ayağa kaldır (Postgres, Redis, RabbitMQ, Elasticsearch, Seq, smtp4dev, Jaeger, Prometheus, Grafana)
+# 1) Altyapıyı ayağa kaldır (Postgres, Redis, RabbitMQ, MinIO, Elasticsearch, Seq, smtp4dev, Jaeger, Prometheus, Grafana)
 docker compose up -d
 
 # 2a) Servisleri container olarak çalıştır (tam sistem)
@@ -65,6 +65,7 @@ Hazır istek koleksiyonları `requests/*.http` dosyalarında (VS Code REST Clien
 |---|---|---|
 | HealthChecks UI | http://localhost:5000/healthchecks-ui | Tüm servislerin sağlık durumu tek panelde |
 | RabbitMQ | http://localhost:15672 (guest/guest) | Kuyruklar, mesaj akışı |
+| MinIO Console | http://localhost:9001 (minioadmin/minioadmin) | Ürün görselleri bucket'ı (S3 API: 9000) |
 | Seq | http://localhost:8081 | Merkezi structured log (servis adına göre filtrele) |
 | Jaeger | http://localhost:16686 | Distributed tracing — bir siparişin servisler arası izini gör |
 | Prometheus | http://localhost:9090 | Metrikler |
@@ -105,7 +106,7 @@ GitHub Actions (`.github/workflows/ci.yml`), her push/PR'da üç aşama çalış
 
 ## Kubernetes
 
-`k8s/` altında düz YAML manifest'ler bulunur: çekirdek altyapı (Postgres + PVC, Redis, RabbitMQ, Elasticsearch, smtp4dev) ve 9 uygulama servisi (Deployment + Service, `/health` readiness probe'ları). Observability yığını (Seq, Jaeger, Prometheus, Grafana) compose'a özgüdür, K8s kapsamına alınmamıştır.
+`k8s/` altında düz YAML manifest'ler bulunur: çekirdek altyapı (Postgres + PVC, Redis, RabbitMQ, MinIO, Elasticsearch, smtp4dev) ve 9 uygulama servisi (Deployment + Service, `/health` readiness probe'ları). Observability yığını (Seq, Jaeger, Prometheus, Grafana) compose'a özgüdür, K8s kapsamına alınmamıştır.
 
 ```bash
 # Lokal bir cluster gerekir (Docker Desktop Kubernetes, kind veya minikube)

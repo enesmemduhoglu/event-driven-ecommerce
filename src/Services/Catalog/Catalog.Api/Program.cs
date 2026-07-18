@@ -4,8 +4,10 @@ using BuildingBlocks.Common.Swagger;
 using BuildingBlocks.Logging;
 using Catalog.Infrastructure;
 using Catalog.Infrastructure.Data;
+using Amazon.S3;
+using Catalog.Api.Services;
 using MassTransit;
-using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Options;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -24,6 +26,12 @@ builder.Services.AddHealthChecks()
 
 builder.Services.AddStackExchangeRedisCache(options =>
     options.Configuration = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379");
+
+// Product images live in S3-compatible object storage (MinIO locally).
+builder.Services.Configure<ObjectStorageOptions>(builder.Configuration.GetSection("ObjectStorage"));
+builder.Services.AddSingleton<IAmazonS3>(sp =>
+    S3ObjectStorage.CreateClient(sp.GetRequiredService<IOptions<ObjectStorageOptions>>().Value));
+builder.Services.AddSingleton<IObjectStorage, S3ObjectStorage>();
 
 builder.Services.AddMassTransit(x =>
 {
@@ -59,12 +67,6 @@ app.UseGlobalExceptionHandling();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// Uploaded product images. Explicit file provider: wwwroot may not exist on first
-// run, in which case WebRootPath was resolved as null at builder time.
-var webRoot = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
-Directory.CreateDirectory(webRoot);
-app.UseStaticFiles(new StaticFileOptions { FileProvider = new PhysicalFileProvider(webRoot) });
-
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -72,5 +74,6 @@ app.MapControllers();
 app.MapObservabilityEndpoints();
 
 await CatalogDbSeeder.SeedAsync(app.Services);
+await app.Services.GetRequiredService<IObjectStorage>().EnsureBucketAsync();
 
 app.Run();

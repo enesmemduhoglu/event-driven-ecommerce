@@ -41,6 +41,8 @@ spec:
               value: http://inventory-api:8080/
             - name: ReverseProxy__Clusters__notification__Destinations__d1__Address
               value: http://notification-api:8080/
+            - name: ReverseProxy__Clusters__minio__Destinations__d1__Address
+              value: http://minio:9000/
             - name: HealthChecksUI__HealthChecks__0__Uri
               value: http://gateway-api:8080/health
             - name: HealthChecksUI__HealthChecks__1__Uri
