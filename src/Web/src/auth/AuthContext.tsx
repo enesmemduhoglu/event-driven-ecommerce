@@ -11,7 +11,6 @@ export type AuthStatus = 'loading' | 'authenticated' | 'anonymous'
 interface AuthContextValue {
   user: UserInfo | null
   status: AuthStatus
-  isAdmin: boolean
   login: (email: string, password: string) => Promise<void>
   register: (req: RegisterRequest) => Promise<void>
   logout: () => void
@@ -64,7 +63,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({
       user,
       status,
-      isAdmin: user?.roles.includes('Admin') ?? false,
       async login(email, password) {
         tokenStore.save(await authApi.login({ email, password }))
         const me = await authApi.me()

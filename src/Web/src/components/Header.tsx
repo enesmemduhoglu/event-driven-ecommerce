@@ -7,7 +7,7 @@ import { basketApi } from '@/api/basket'
 import { catalogApi } from '@/api/catalog'
 
 export function Header() {
-  const { user, status, isAdmin, logout } = useAuth()
+  const { user, status, logout } = useAuth()
   const navigate = useNavigate()
   const [q, setQ] = useState('')
 
@@ -109,14 +109,6 @@ export function Header() {
             </Link>
           ))}
           <span className="flex-1" />
-          {isAdmin && (
-            <NavLink
-              to="/admin"
-              className="rounded-sm border border-transparent px-2 py-1 whitespace-nowrap text-[#febd69] hover:border-white"
-            >
-              Admin Paneli
-            </NavLink>
-          )}
           {status === 'authenticated' ? (
             <button
               onClick={logout}
