@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { ordersApi } from '@/api/orders'
+import { ErrorState } from '@/components/Feedback'
+import { ChevronRightIcon } from '@/components/icons'
 import { Money } from '@/components/Money'
 import { Spinner } from '@/components/Spinner'
 import { StatusBadge } from '@/components/StatusBadge'
@@ -20,19 +22,20 @@ export function OrderDetail() {
   if (order.isPending) return <Spinner fullPage />
   if (order.isError)
     return (
-      <p className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">
-        Sipariş yüklenemedi: {order.error.message}
-      </p>
+      <ErrorState
+        message={`Sipariş yüklenemedi: ${order.error.message}`}
+        onRetry={() => order.refetch()}
+      />
     )
 
   const o = order.data
   return (
     <div className="mx-auto max-w-2xl">
-      <nav className="mb-4 text-sm text-gray-500">
+      <nav aria-label="İçerik haritası" className="mb-4 flex items-center gap-1 text-sm text-gray-500">
         <Link to="/orders" className={linkBlue}>
           Siparişlerim
         </Link>
-        {' › '}
+        <ChevronRightIcon size={14} className="shrink-0 text-gray-400" />
         <span className="font-mono">#{o.id.slice(0, 8)}</span>
       </nav>
 
@@ -83,7 +86,7 @@ export function OrderDetail() {
                 productId={item.productId}
                 name={item.productName}
                 className="size-12 rounded-md"
-                emojiClassName="text-xl"
+                iconClassName="size-6"
               />
               <Link to={`/products/${item.productId}`} className={`flex-1 ${linkBlue}`}>
                 {item.productName} × {item.quantity}
@@ -95,7 +98,7 @@ export function OrderDetail() {
 
         <div className="mt-4 flex justify-between border-t border-gray-100 pt-4">
           <span className="font-semibold">Toplam</span>
-          <Money amount={o.totalAmount} className="text-lg font-bold text-indigo-700" />
+          <Money amount={o.totalAmount} className="text-lg font-bold text-price" />
         </div>
 
         <h2 className="mt-6 mb-1 font-semibold">Teslimat Adresi</h2>

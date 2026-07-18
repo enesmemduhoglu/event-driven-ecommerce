@@ -34,12 +34,14 @@ export function Register() {
   return (
     <div className="mx-auto mt-8 max-w-sm">
       <p className="mb-4 text-center text-2xl font-bold">
-        e-ticaret<span className="text-[#ff9900]">.dev</span>
+        e-ticaret<span className="text-brand">.dev</span>
       </p>
       <form onSubmit={onSubmit} className={`${card} space-y-4 p-6`}>
         <h1 className="text-2xl font-medium">Hesap oluştur</h1>
         {error && (
-          <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+          <p role="alert" className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {error}
+          </p>
         )}
         <div className="grid grid-cols-2 gap-3">
           <label className="block">

@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { basketApi } from '@/api/basket'
 import type { CustomerBasket } from '@/api/types'
+import { EmptyState, ErrorState } from '@/components/Feedback'
+import { CartIcon, MinusIcon, PlusIcon, TrashIcon } from '@/components/icons'
 import { Money } from '@/components/Money'
 import { ProductImage } from '@/components/ProductImage'
 import { Spinner } from '@/components/Spinner'
@@ -35,22 +37,26 @@ export function Basket() {
   if (basket.isPending) return <Spinner fullPage />
   if (basket.isError)
     return (
-      <p className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">
-        Sepet yüklenemedi: {basket.error.message}
-      </p>
+      <ErrorState
+        message={`Sepet yüklenemedi: ${basket.error.message}`}
+        onRetry={() => basket.refetch()}
+      />
     )
 
   const b = basket.data
   if (b.items.length === 0)
     return (
-      <div className={`${card} mx-auto max-w-2xl py-16 text-center`}>
-        <span className="text-6xl">🛒</span>
-        <h1 className="mt-4 text-2xl font-bold">Sepetiniz boş</h1>
-        <p className="mt-2 text-gray-500">Kampanyalı ürünlere göz atıp sepetinizi doldurun.</p>
-        <Link to="/products" className={`${btnPrimary} mt-6 inline-block`}>
-          Alışverişe Başla
-        </Link>
-      </div>
+      <EmptyState
+        icon={<CartIcon size={32} />}
+        title="Sepetiniz boş"
+        action={
+          <Link to="/products" className={btnPrimary}>
+            Alışverişe Başla
+          </Link>
+        }
+      >
+        Kampanyalı ürünlere göz atıp sepetinizi doldurun.
+      </EmptyState>
     )
 
   const busy = updateQuantity.isPending || removeItem.isPending || clear.isPending
@@ -80,17 +86,17 @@ export function Basket() {
                 productId={item.productId}
                 name={item.productName}
                 className="size-24 rounded-md"
-                emojiClassName="text-4xl"
+                iconClassName="size-10"
               />
             </Link>
             <div className="min-w-0 flex-1">
               <Link
                 to={`/products/${item.productId}`}
-                className="font-medium text-gray-900 hover:text-[#c45500]"
+                className="font-medium text-gray-900 transition-colors duration-150 hover:text-link-hover"
               >
                 {item.productName}
               </Link>
-              <p className="mt-0.5 text-xs text-[#007600]">Stok durumuna göre gönderilir</p>
+              <p className="mt-0.5 text-xs text-good">Stok durumuna göre gönderilir</p>
               <div className="mt-2 flex items-center gap-3 text-sm">
                 <div className="flex items-center overflow-hidden rounded-full border border-[#d5d9d9] shadow-sm">
                   <button
@@ -103,12 +109,12 @@ export function Basket() {
                         : removeItem.mutate(item.productId)
                     }
                     disabled={busy}
-                    className="px-3 py-1 hover:bg-gray-100 disabled:opacity-50"
-                    aria-label="Azalt"
+                    className="flex size-10 items-center justify-center transition-colors duration-150 hover:bg-gray-100 disabled:opacity-50"
+                    aria-label={item.quantity > 1 ? 'Adedi azalt' : 'Ürünü sepetten çıkar'}
                   >
-                    {item.quantity > 1 ? '−' : '🗑'}
+                    {item.quantity > 1 ? <MinusIcon size={16} /> : <TrashIcon size={16} />}
                   </button>
-                  <span className="border-x border-[#d5d9d9] px-3 py-1 font-medium">
+                  <span className="flex h-10 min-w-10 items-center justify-center border-x border-[#d5d9d9] px-2 font-medium">
                     {item.quantity}
                   </span>
                   <button
@@ -116,10 +122,10 @@ export function Basket() {
                       updateQuantity.mutate({ productId: item.productId, quantity: item.quantity + 1 })
                     }
                     disabled={busy}
-                    className="px-3 py-1 hover:bg-gray-100 disabled:opacity-50"
-                    aria-label="Artır"
+                    className="flex size-10 items-center justify-center transition-colors duration-150 hover:bg-gray-100 disabled:opacity-50"
+                    aria-label="Adedi artır"
                   >
-                    +
+                    <PlusIcon size={16} />
                   </button>
                 </div>
                 <button
@@ -150,7 +156,7 @@ export function Basket() {
           Ara toplam ({itemCount} ürün):{' '}
           <Money amount={b.totalAmount} className="font-semibold" />
         </p>
-        <p className="mt-1 text-xs text-[#007600]">Siparişiniz kargo bedava!</p>
+        <p className="mt-1 text-xs text-good">Siparişiniz kargo bedava!</p>
         <Link to="/checkout" className={`${btnPrimary} mt-4 block w-full text-center`}>
           Siparişi Tamamla
         </Link>

@@ -1,12 +1,18 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { Link, useSearchParams } from 'react-router-dom'
 import { catalogApi } from '@/api/catalog'
+import { ErrorState } from '@/components/Feedback'
 import { Pagination } from '@/components/Pagination'
 import { ProductCard } from '@/components/ProductCard'
-import { Spinner } from '@/components/Spinner'
+import { ProductGridSkeleton } from '@/components/Skeleton'
 import { card } from '@/components/ui'
 
 const PAGE_SIZE = 12
+
+const categoryLink = (active: boolean) =>
+  active
+    ? 'font-bold text-link-hover'
+    : 'text-gray-700 transition-colors duration-150 hover:text-link-hover'
 
 export function ProductList() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -38,7 +44,8 @@ export function ProductList() {
           <li>
             <Link
               to="/products"
-              className={!categoryId ? 'font-bold text-[#c45500]' : 'text-gray-700 hover:text-[#c45500]'}
+              aria-current={!categoryId ? 'true' : undefined}
+              className={categoryLink(!categoryId)}
             >
               Tüm Ürünler
             </Link>
@@ -47,9 +54,8 @@ export function ProductList() {
             <li key={c.id}>
               <Link
                 to={`/products?categoryId=${c.id}`}
-                className={
-                  c.id === categoryId ? 'font-bold text-[#c45500]' : 'text-gray-700 hover:text-[#c45500]'
-                }
+                aria-current={c.id === categoryId ? 'true' : undefined}
+                className={categoryLink(c.id === categoryId)}
               >
                 {c.name}
               </Link>
@@ -67,7 +73,7 @@ export function ProductList() {
                 {activeCategory && (
                   <>
                     {' — '}
-                    <span className="font-semibold text-[#c45500]">{activeCategory.name}</span>
+                    <span className="font-semibold text-link-hover">{activeCategory.name}</span>
                   </>
                 )}
               </>
@@ -78,12 +84,13 @@ export function ProductList() {
           {/* Mobilde kategori seçimi */}
           <select
             value={categoryId ?? ''}
+            aria-label="Kategori seç"
             onChange={(e) => {
               const params = new URLSearchParams()
               if (e.target.value) params.set('categoryId', e.target.value)
               setSearchParams(params)
             }}
-            className="rounded-md border border-gray-300 bg-white px-2 py-1 md:hidden"
+            className="rounded-md border border-gray-300 bg-white px-2 py-1.5 md:hidden"
           >
             <option value="">Tüm kategoriler</option>
             {categories.data?.map((c) => (
@@ -95,19 +102,23 @@ export function ProductList() {
         </div>
 
         {products.isPending ? (
-          <Spinner fullPage />
+          <ProductGridSkeleton />
         ) : products.isError ? (
-          <p className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">
-            Ürünler yüklenemedi: {products.error.message}
-          </p>
+          <ErrorState
+            message={`Ürünler yüklenemedi: ${products.error.message}`}
+            onRetry={() => products.refetch()}
+          />
         ) : products.data.items.length === 0 ? (
-          <p className={`${card} py-12 text-center text-gray-500`}>
-            Bu kriterlere uyan ürün bulunamadı.
-          </p>
+          <div className={`${card} px-6 py-12 text-center text-gray-500`}>
+            <p>Bu kriterlere uyan ürün bulunamadı.</p>
+            <Link to="/products" className="mt-2 inline-block text-sm text-link hover:underline">
+              Tüm ürünlere göz atın
+            </Link>
+          </div>
         ) : (
           <>
             <div
-              className={`grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4 ${
+              className={`grid grid-cols-2 gap-3 transition-opacity duration-150 sm:grid-cols-3 xl:grid-cols-4 ${
                 products.isPlaceholderData ? 'opacity-60' : ''
               }`}
             >

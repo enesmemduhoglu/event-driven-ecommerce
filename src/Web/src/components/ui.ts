@@ -1,17 +1,19 @@
 // Amazon tarzı ortak buton/kart sınıfları — tek noktadan tutarlılık.
+// Renkler index.css @theme token'larından gelir (cta, accent, link, price…).
 
-export const btnPrimary =
-  'rounded-full bg-[#ffd814] px-5 py-2 text-sm font-medium text-gray-900 shadow-sm hover:bg-[#f7ca00] disabled:opacity-50'
+const btnBase =
+  'inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-5 py-2 text-sm font-medium shadow-sm transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50'
 
-export const btnOrange =
-  'rounded-full bg-[#ffa41c] px-5 py-2 text-sm font-medium text-gray-900 shadow-sm hover:bg-[#fa8900] disabled:opacity-50'
+export const btnPrimary = `${btnBase} bg-cta text-gray-900 hover:bg-cta-hover`
 
-export const btnSecondary =
-  'rounded-full border border-gray-300 bg-white px-5 py-2 text-sm font-medium text-gray-900 shadow-sm hover:bg-gray-50 disabled:opacity-50'
+export const btnOrange = `${btnBase} bg-accent text-gray-900 hover:bg-accent-hover`
 
-export const card = 'rounded-lg border border-gray-200 bg-white'
+export const btnSecondary = `${btnBase} border border-gray-300 bg-white text-gray-900 hover:bg-gray-50`
 
-export const linkBlue = 'text-[#007185] hover:text-[#c45500] hover:underline'
+export const card = 'rounded-lg border border-gray-200 bg-white shadow-sm'
+
+export const linkBlue =
+  'rounded-sm text-link underline-offset-2 transition-colors duration-150 hover:text-link-hover hover:underline'
 
 export const input =
-  'w-full rounded-md border border-gray-400 px-3 py-2 text-sm shadow-inner focus:border-[#e77600] focus:ring-2 focus:ring-[#e77600]/30 focus:outline-none'
+  'w-full rounded-md border border-gray-400 bg-white px-3 py-2 text-sm shadow-inner transition-[border-color,box-shadow] duration-150 focus:border-focus focus:ring-2 focus:ring-focus/30 focus:outline-none'

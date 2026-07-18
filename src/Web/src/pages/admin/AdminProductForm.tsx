@@ -4,6 +4,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { catalogApi } from '@/api/catalog'
 import type { ProductDto } from '@/api/types'
+import { ErrorState } from '@/components/Feedback'
+import { ChevronRightIcon } from '@/components/icons'
 import { ProductImage } from '@/components/ProductImage'
 import { Spinner } from '@/components/Spinner'
 import { useToast } from '@/components/Toaster'
@@ -38,7 +40,7 @@ function ImageSection({ product }: { product: ProductDto }) {
           categoryName={product.categoryName}
           imageUrl={product.imageUrl}
           className="size-28 rounded-md"
-          emojiClassName="text-4xl"
+          iconClassName="size-12"
         />
         <div className="flex-1">
           <input
@@ -137,18 +139,19 @@ export function AdminProductForm() {
   if (isEdit && existing.isPending) return <Spinner fullPage />
   if (isEdit && existing.isError)
     return (
-      <p className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">
-        Ürün yüklenemedi: {existing.error.message}
-      </p>
+      <ErrorState
+        message={`Ürün yüklenemedi: ${existing.error.message}`}
+        onRetry={() => existing.refetch()}
+      />
     )
 
   return (
     <div className={`${card} max-w-2xl p-6`}>
-      <nav className="mb-4 text-sm">
+      <nav aria-label="İçerik haritası" className="mb-4 flex items-center gap-1 text-sm">
         <Link to="/admin/products" className={linkBlue}>
           Ürünler
         </Link>
-        {' › '}
+        <ChevronRightIcon size={14} className="shrink-0 text-gray-400" />
         <span>{isEdit ? 'Düzenle' : 'Yeni Ürün'}</span>
       </nav>
       <h1 className="mb-4 text-xl font-bold">{isEdit ? `Düzenle: ${existing.data?.name}` : 'Yeni Ürün'}</h1>

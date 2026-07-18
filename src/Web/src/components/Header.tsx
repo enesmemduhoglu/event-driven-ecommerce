@@ -5,6 +5,10 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/auth/AuthContext'
 import { basketApi } from '@/api/basket'
 import { catalogApi } from '@/api/catalog'
+import { CartIcon, MenuIcon, SearchIcon } from '@/components/icons'
+
+const headerLink =
+  'rounded-sm border border-transparent px-2 py-1 transition-colors duration-150 hover:border-white'
 
 export function Header() {
   const { user, status, logout } = useAuth()
@@ -28,16 +32,16 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 shadow">
       {/* Üst bar — koyu lacivert */}
-      <div className="bg-[#131921] text-white">
+      <div className="bg-ink text-white">
         <div className="mx-auto flex h-[60px] max-w-[1480px] items-center gap-4 px-4">
-          <Link
-            to="/"
-            className="rounded-sm border border-transparent px-2 py-1 text-xl font-bold hover:border-white"
-          >
-            e-ticaret<span className="text-[#ff9900]">.dev</span>
+          <Link to="/" className={`${headerLink} text-xl font-bold`}>
+            e-ticaret<span className="text-brand">.dev</span>
           </Link>
 
-          <form onSubmit={onSearch} className="flex h-10 flex-1 overflow-hidden rounded-md">
+          <form
+            onSubmit={onSearch}
+            className="flex h-10 flex-1 overflow-hidden rounded-md ring-brand transition-shadow duration-150 focus-within:ring-2"
+          >
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
@@ -47,28 +51,22 @@ export function Header() {
             />
             <button
               type="submit"
-              className="flex w-12 items-center justify-center bg-[#febd69] text-lg hover:bg-[#f3a847]"
+              className="flex w-12 items-center justify-center bg-brand-soft text-ink transition-colors duration-150 hover:bg-accent"
               aria-label="Ara"
             >
-              🔍
+              <SearchIcon size={20} />
             </button>
           </form>
 
           {status === 'authenticated' && user ? (
-            <Link
-              to="/orders"
-              className="rounded-sm border border-transparent px-2 py-1 leading-tight hover:border-white"
-            >
+            <Link to="/orders" className={`${headerLink} leading-tight`}>
               <span className="block text-xs text-gray-300">
                 Merhaba, {user.fullName.split(' ')[0]}
               </span>
               <span className="block text-sm font-bold">Siparişlerim</span>
             </Link>
           ) : (
-            <Link
-              to="/login"
-              className="rounded-sm border border-transparent px-2 py-1 leading-tight hover:border-white"
-            >
+            <Link to="/login" className={`${headerLink} leading-tight`}>
               <span className="block text-xs text-gray-300">Merhaba, giriş yapın</span>
               <span className="block text-sm font-bold">Hesap</span>
             </Link>
@@ -76,12 +74,12 @@ export function Header() {
 
           <Link
             to="/basket"
-            className="relative flex items-end gap-1 rounded-sm border border-transparent px-2 py-1 hover:border-white"
+            className={`${headerLink} relative flex items-end gap-1.5`}
             aria-label={`Sepet, ${itemCount} ürün`}
           >
-            <span className="text-2xl">🛒</span>
+            <CartIcon size={28} />
             {itemCount > 0 && (
-              <span className="absolute -top-1 left-6 rounded-full bg-[#ff9900] px-1.5 text-xs font-bold text-[#131921]">
+              <span className="absolute -top-1 left-6 rounded-full bg-brand px-1.5 text-xs font-bold text-ink">
                 {itemCount}
               </span>
             )}
@@ -91,36 +89,28 @@ export function Header() {
       </div>
 
       {/* Alt bar — kategoriler ve navigasyon */}
-      <div className="bg-[#232f3e] text-sm text-white">
+      <div className="bg-navy text-sm text-white">
         <div className="mx-auto flex h-10 max-w-[1480px] items-center gap-1 overflow-x-auto px-4">
-          <NavLink
-            to="/products"
-            className="rounded-sm border border-transparent px-2 py-1 whitespace-nowrap hover:border-white"
-          >
-            ☰ Tüm Ürünler
+          <NavLink to="/products" className={`${headerLink} flex items-center gap-1.5 whitespace-nowrap`}>
+            <MenuIcon size={16} />
+            Tüm Ürünler
           </NavLink>
           {categories.data?.slice(0, 6).map((c) => (
             <Link
               key={c.id}
               to={`/products?categoryId=${c.id}`}
-              className="rounded-sm border border-transparent px-2 py-1 whitespace-nowrap hover:border-white"
+              className={`${headerLink} whitespace-nowrap`}
             >
               {c.name}
             </Link>
           ))}
           <span className="flex-1" />
           {status === 'authenticated' ? (
-            <button
-              onClick={logout}
-              className="rounded-sm border border-transparent px-2 py-1 whitespace-nowrap hover:border-white"
-            >
+            <button onClick={logout} className={`${headerLink} whitespace-nowrap`}>
               Çıkış Yap
             </button>
           ) : (
-            <Link
-              to="/register"
-              className="rounded-sm border border-transparent px-2 py-1 whitespace-nowrap hover:border-white"
-            >
+            <Link to="/register" className={`${headerLink} whitespace-nowrap`}>
               Kayıt Ol
             </Link>
           )}

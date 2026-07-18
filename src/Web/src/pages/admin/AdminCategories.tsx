@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { catalogApi } from '@/api/catalog'
 import type { CategoryDto } from '@/api/types'
+import { ErrorState } from '@/components/Feedback'
 import { Spinner } from '@/components/Spinner'
 import { useToast } from '@/components/Toaster'
 import { btnPrimary, btnSecondary, card, input as inputClass, linkBlue } from '@/components/ui'
@@ -75,9 +76,10 @@ export function AdminCategories() {
         {categories.isPending ? (
           <Spinner />
         ) : categories.isError ? (
-          <p className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">
-            Kategoriler yüklenemedi: {categories.error.message}
-          </p>
+          <ErrorState
+            message={`Kategoriler yüklenemedi: ${categories.error.message}`}
+            onRetry={() => categories.refetch()}
+          />
         ) : categories.data.length === 0 ? (
           <p className="text-sm text-gray-500">Henüz kategori yok.</p>
         ) : (

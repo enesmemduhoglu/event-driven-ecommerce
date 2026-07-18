@@ -2,7 +2,21 @@
 // türetilen deterministik placeholder'a düşer (aynı ürün her zaman aynı görünür).
 
 import { useState } from 'react'
+import type { ComponentType } from 'react'
 import { API_URL } from '@/api/http'
+import {
+  BookOpenIcon,
+  ChefHatIcon,
+  DumbbellIcon,
+  GamepadIcon,
+  HeadphonesIcon,
+  LaptopIcon,
+  LeafIcon,
+  PackageIcon,
+  ShirtIcon,
+  SmartphoneIcon,
+} from '@/components/icons'
+import type { IconProps } from '@/components/icons'
 
 export function hashCode(s: string): number {
   let h = 0
@@ -10,20 +24,20 @@ export function hashCode(s: string): number {
   return Math.abs(h)
 }
 
-const EMOJI_RULES: Array<[RegExp, string]> = [
-  [/telefon|phone|iphone|samsung|elektronik|electronic/i, '📱'],
-  [/laptop|bilgisayar|computer|mouse|klavye|keyboard|monitor/i, '💻'],
-  [/kulakl[ıi]k|headphone|hoparl[öo]r|speaker|ses|audio/i, '🎧'],
-  [/kitap|book/i, '📚'],
-  [/ev|home|ya[şs]am|mutfak|kitchen|airfryer|f[ıi]r[ıi]n/i, '🍳'],
-  [/giyim|moda|fashion|clothing|ayakkab[ıi]|shoe/i, '👕'],
-  [/oyuncak|toy|oyun|game/i, '🎮'],
-  [/spor|sport|fitness/i, '⚽'],
-  [/bahçe|garden|outdoor/i, '🌿'],
+const ICON_RULES: Array<[RegExp, ComponentType<IconProps>]> = [
+  [/telefon|phone|iphone|samsung|elektronik|electronic/i, SmartphoneIcon],
+  [/laptop|bilgisayar|computer|mouse|klavye|keyboard|monitor/i, LaptopIcon],
+  [/kulakl[ıi]k|headphone|hoparl[öo]r|speaker|ses|audio/i, HeadphonesIcon],
+  [/kitap|book/i, BookOpenIcon],
+  [/ev|home|ya[şs]am|mutfak|kitchen|airfryer|f[ıi]r[ıi]n/i, ChefHatIcon],
+  [/giyim|moda|fashion|clothing|ayakkab[ıi]|shoe/i, ShirtIcon],
+  [/oyuncak|toy|oyun|game/i, GamepadIcon],
+  [/spor|sport|fitness/i, DumbbellIcon],
+  [/bahçe|garden|outdoor/i, LeafIcon],
 ]
 
-function emojiFor(text: string): string {
-  return EMOJI_RULES.find(([re]) => re.test(text))?.[1] ?? '📦'
+function iconFor(text: string): ComponentType<IconProps> {
+  return ICON_RULES.find(([re]) => re.test(text))?.[1] ?? PackageIcon
 }
 
 interface ProductImageProps {
@@ -32,7 +46,8 @@ interface ProductImageProps {
   categoryName?: string
   imageUrl?: string | null
   className?: string
-  emojiClassName?: string
+  /** Placeholder ikonunun boyutu, ör. "size-16". */
+  iconClassName?: string
 }
 
 export function ProductImage({
@@ -41,7 +56,7 @@ export function ProductImage({
   categoryName = '',
   imageUrl,
   className = '',
-  emojiClassName = 'text-6xl',
+  iconClassName = 'size-16',
 }: ProductImageProps) {
   const [failed, setFailed] = useState(false)
 
@@ -58,15 +73,17 @@ export function ProductImage({
   }
 
   const hue = hashCode(productId) % 360
+  const CategoryIcon = iconFor(`${categoryName} ${name}`)
   return (
     <div
       className={`flex items-center justify-center ${className}`}
       style={{
         background: `linear-gradient(135deg, hsl(${hue} 45% 95%), hsl(${hue} 40% 86%))`,
+        color: `hsl(${hue} 35% 42%)`,
       }}
       aria-hidden="true"
     >
-      <span className={emojiClassName}>{emojiFor(`${categoryName} ${name}`)}</span>
+      <CategoryIcon className={iconClassName} />
     </div>
   )
 }

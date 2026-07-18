@@ -1,5 +1,64 @@
 @import "tailwindcss";
 
-body {
-  @apply bg-[#eaeded] text-gray-900 antialiased;
+/* Marka token'ları — Amazon-vari koyu header + turuncu vurgu.
+   Bileşenlerde ham hex yerine bu isimler kullanılır (bg-ink, text-price…). */
+@theme {
+  --color-ink: #131921;
+  --color-navy: #232f3e;
+  --color-navy-soft: #37475a;
+  --color-brand: #ff9900;
+  --color-brand-soft: #febd69;
+  --color-cta: #ffd814;
+  --color-cta-hover: #f7ca00;
+  --color-accent: #ffa41c;
+  --color-accent-hover: #fa8900;
+  --color-price: #b12704;
+  --color-link: #007185;
+  --color-link-hover: #c45500;
+  --color-good: #007600;
+  --color-page: #eaeded;
+  --color-focus: #e77600;
+}
+
+@layer base {
+  body {
+    @apply bg-page text-gray-900 antialiased;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+
+  /* Klavye kullanıcıları için görünür odak halkası. */
+  :focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

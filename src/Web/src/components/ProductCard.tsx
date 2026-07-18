@@ -8,7 +8,7 @@ export function ProductCard({ product }: { product: ProductDto }) {
   return (
     <Link
       to={`/products/${product.id}`}
-      className="group flex flex-col bg-white p-4 transition hover:shadow-lg"
+      className="group flex flex-col rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-shadow duration-200 hover:shadow-lg"
     >
       <ProductImage
         productId={product.id}
@@ -17,7 +17,7 @@ export function ProductCard({ product }: { product: ProductDto }) {
         imageUrl={product.imageUrl}
         className="aspect-square w-full rounded-md"
       />
-      <h3 className="mt-3 line-clamp-2 text-sm text-gray-900 group-hover:text-[#c45500]">
+      <h3 className="mt-3 line-clamp-2 text-sm text-gray-900 transition-colors duration-150 group-hover:text-link-hover">
         {product.name}
       </h3>
       <Stars id={product.id} />

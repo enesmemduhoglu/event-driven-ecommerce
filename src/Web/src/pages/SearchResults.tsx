@@ -5,15 +5,14 @@ import { catalogApi } from '@/api/catalog'
 import { searchApi } from '@/api/search'
 import type { SearchParams } from '@/api/search'
 import { ServiceUnavailableError } from '@/api/http'
+import { ErrorState } from '@/components/Feedback'
 import { Pagination } from '@/components/Pagination'
 import { ProductCard } from '@/components/ProductCard'
-import { Spinner } from '@/components/Spinner'
-
-import { btnOrange, card } from '@/components/ui'
+import { ProductGridSkeleton } from '@/components/Skeleton'
+import { SearchIcon } from '@/components/icons'
+import { btnOrange, card, input as inputClass } from '@/components/ui'
 
 const PAGE_SIZE = 12
-const inputClass =
-  'rounded-md border border-gray-400 bg-white px-3 py-2 text-sm shadow-inner focus:border-[#e77600] focus:outline-none'
 
 export function SearchResults() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -64,7 +63,7 @@ export function SearchResults() {
             name="q"
             defaultValue={params.q ?? ''}
             placeholder="Ürün adı, açıklama…"
-            className={`${inputClass} w-full`}
+            className={inputClass}
           />
         </label>
         <label>
@@ -109,15 +108,16 @@ export function SearchResults() {
           </select>
         </label>
         <button type="submit" className={btnOrange}>
+          <SearchIcon size={16} />
           Ara
         </button>
       </form>
 
       {results.isPending ? (
-        <Spinner fullPage />
+        <ProductGridSkeleton />
       ) : results.isError ? (
         results.error instanceof ServiceUnavailableError ? (
-          <p className="rounded-md bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <p role="alert" className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             Arama servisi şu anda kullanılamıyor. Ürünlere{' '}
             <a href="/products" className="font-medium underline">
               katalog sayfasından
@@ -125,17 +125,22 @@ export function SearchResults() {
             göz atabilirsiniz.
           </p>
         ) : (
-          <p className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">
-            Arama başarısız: {results.error.message}
-          </p>
+          <ErrorState
+            message={`Arama başarısız: ${results.error.message}`}
+            onRetry={() => results.refetch()}
+          />
         )
       ) : results.data.items.length === 0 ? (
-        <p className="py-12 text-center text-gray-500">Sonuç bulunamadı.</p>
+        <div className={`${card} px-6 py-12 text-center text-gray-500`}>
+          <SearchIcon size={32} className="mx-auto text-gray-300" />
+          <p className="mt-3">Sonuç bulunamadı.</p>
+          <p className="mt-1 text-sm">Farklı bir arama terimi deneyin veya filtreleri gevşetin.</p>
+        </div>
       ) : (
         <>
           <p className="mb-3 text-sm text-gray-500">{results.data.totalCount} sonuç bulundu</p>
           <div
-            className={`grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4 ${
+            className={`grid grid-cols-2 gap-3 transition-opacity duration-150 sm:grid-cols-3 xl:grid-cols-4 ${
               results.isPlaceholderData ? 'opacity-60' : ''
             }`}
           >

@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { ordersApi } from '@/api/orders'
+import { EmptyState, ErrorState } from '@/components/Feedback'
+import { PackageIcon } from '@/components/icons'
 import { Money } from '@/components/Money'
 import { ProductImage } from '@/components/ProductImage'
 import { Spinner } from '@/components/Spinner'
@@ -13,20 +15,23 @@ export function Orders() {
   if (orders.isPending) return <Spinner fullPage />
   if (orders.isError)
     return (
-      <p className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">
-        Siparişler yüklenemedi: {orders.error.message}
-      </p>
+      <ErrorState
+        message={`Siparişler yüklenemedi: ${orders.error.message}`}
+        onRetry={() => orders.refetch()}
+      />
     )
 
   if (orders.data.length === 0)
     return (
-      <div className={`${card} mx-auto max-w-2xl py-16 text-center`}>
-        <span className="text-6xl">📦</span>
-        <h1 className="mt-4 text-2xl font-bold">Henüz siparişiniz yok</h1>
-        <Link to="/products" className={`${btnPrimary} mt-6 inline-block`}>
-          Alışverişe Başla
-        </Link>
-      </div>
+      <EmptyState
+        icon={<PackageIcon size={32} />}
+        title="Henüz siparişiniz yok"
+        action={
+          <Link to="/products" className={btnPrimary}>
+            Alışverişe Başla
+          </Link>
+        }
+      />
     )
 
   return (
@@ -64,7 +69,7 @@ export function Orders() {
                     productId={item.productId}
                     name={item.productName}
                     className="size-14 rounded-full border-2 border-white"
-                    emojiClassName="text-2xl"
+                    iconClassName="size-7"
                   />
                 ))}
               </div>
@@ -78,7 +83,7 @@ export function Orders() {
                   <p className="text-gray-500">+{order.items.length - 2} ürün daha</p>
                 )}
                 {order.status === 'Cancelled' && order.cancellationReason && (
-                  <p className="mt-1 text-xs text-[#b12704]">{order.cancellationReason}</p>
+                  <p className="mt-1 text-xs text-price">{order.cancellationReason}</p>
                 )}
               </div>
               <Link to={`/orders/${order.id}`} className={btnSecondary}>

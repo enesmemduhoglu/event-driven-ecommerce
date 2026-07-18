@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { catalogApi } from '@/api/catalog'
+import { ErrorState } from '@/components/Feedback'
 import { ProductCard } from '@/components/ProductCard'
+import { ProductGridSkeleton } from '@/components/Skeleton'
 import { ProductImage } from '@/components/ProductImage'
-import { Spinner } from '@/components/Spinner'
-import { card, linkBlue } from '@/components/ui'
+import { btnPrimary, card, linkBlue } from '@/components/ui'
 
 export function Home() {
   const categories = useQuery({ queryKey: ['categories'], queryFn: catalogApi.categories })
@@ -16,20 +17,27 @@ export function Home() {
   return (
     <div className="space-y-6">
       {/* Hero bandı */}
-      <section className="relative overflow-hidden rounded-lg bg-gradient-to-r from-[#232f3e] via-[#37475a] to-[#232f3e] px-8 py-14 text-white">
-        <h1 className="text-3xl font-bold">
-          Aradığınız her şey <span className="text-[#febd69]">tek adreste</span>
-        </h1>
-        <p className="mt-2 max-w-xl text-gray-300">
-          Binlerce üründe kampanyalı fiyatlar. Siparişiniz saga orkestrasyonuyla saniyeler içinde
-          onaylanır, durumu anlık bildirimlerle takip edersiniz.
-        </p>
-        <Link
-          to="/products"
-          className="mt-6 inline-block rounded-full bg-[#ffd814] px-6 py-2.5 text-sm font-medium text-gray-900 hover:bg-[#f7ca00]"
-        >
-          Alışverişe Başla
-        </Link>
+      <section className="relative overflow-hidden rounded-lg bg-gradient-to-r from-navy via-navy-soft to-navy px-8 py-14 text-white">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-40"
+          style={{
+            background:
+              'radial-gradient(600px circle at 85% 20%, rgba(255,153,0,0.25), transparent 60%)',
+          }}
+          aria-hidden="true"
+        />
+        <div className="relative">
+          <h1 className="text-3xl font-bold">
+            Aradığınız her şey <span className="text-brand-soft">tek adreste</span>
+          </h1>
+          <p className="mt-2 max-w-xl text-gray-300">
+            Binlerce üründe kampanyalı fiyatlar. Siparişiniz saga orkestrasyonuyla saniyeler içinde
+            onaylanır, durumu anlık bildirimlerle takip edersiniz.
+          </p>
+          <Link to="/products" className={`${btnPrimary} mt-6`}>
+            Alışverişe Başla
+          </Link>
+        </div>
       </section>
 
       {/* Kategori kartları */}
@@ -38,13 +46,13 @@ export function Home() {
           {categories.data.slice(0, 4).map((c) => (
             <div key={c.id} className={`${card} p-4`}>
               <h2 className="mb-3 font-bold">{c.name}</h2>
-              <Link to={`/products?categoryId=${c.id}`}>
+              <Link to={`/products?categoryId=${c.id}`} className="group block">
                 <ProductImage
                   productId={c.id}
                   name={c.name}
                   categoryName={c.name}
-                  className="aspect-square w-full rounded-md"
-                  emojiClassName="text-7xl"
+                  className="aspect-square w-full rounded-md transition-opacity duration-150 group-hover:opacity-90"
+                  iconClassName="size-20"
                 />
               </Link>
               <Link to={`/products?categoryId=${c.id}`} className={`mt-3 block text-sm ${linkBlue}`}>
@@ -64,9 +72,12 @@ export function Home() {
           </Link>
         </div>
         {latest.isPending ? (
-          <Spinner />
+          <ProductGridSkeleton
+            count={6}
+            className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6"
+          />
         ) : latest.isError ? (
-          <p className="text-sm text-gray-500">Ürünler yüklenemedi.</p>
+          <ErrorState message="Ürünler yüklenemedi." onRetry={() => latest.refetch()} />
         ) : latest.data.items.length === 0 ? (
           <p className="text-sm text-gray-500">Henüz ürün yok.</p>
         ) : (

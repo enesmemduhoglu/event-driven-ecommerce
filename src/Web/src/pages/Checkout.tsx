@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { basketApi } from '@/api/basket'
 import { ordersApi } from '@/api/orders'
 import type { CustomerBasket } from '@/api/types'
+import { ErrorState } from '@/components/Feedback'
 import { Money } from '@/components/Money'
 import { Spinner } from '@/components/Spinner'
 import { useToast } from '@/components/Toaster'
@@ -38,9 +39,10 @@ export function Checkout() {
   if (basket.isPending) return <Spinner fullPage />
   if (basket.isError)
     return (
-      <p className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">
-        Sepet yüklenemedi: {basket.error.message}
-      </p>
+      <ErrorState
+        message={`Sepet yüklenemedi: ${basket.error.message}`}
+        onRetry={() => basket.refetch()}
+      />
     )
 
   const b = basket.data
@@ -87,7 +89,7 @@ export function Checkout() {
         </ul>
         <div className="mt-3 flex justify-between border-t border-gray-100 pt-3 font-semibold">
           <span>Toplam</span>
-          <Money amount={b.totalAmount} className="text-indigo-700" />
+          <Money amount={b.totalAmount} className="text-price" />
         </div>
       </div>
 

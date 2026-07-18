@@ -1,9 +1,10 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { ClipboardListIcon, PackageIcon, TagIcon } from '@/components/icons'
 import { card } from '@/components/ui'
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
-  `block rounded-md px-3 py-2 text-sm ${
-    isActive ? 'bg-[#232f3e] font-semibold text-white' : 'text-gray-700 hover:bg-gray-100'
+  `flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors duration-150 ${
+    isActive ? 'bg-navy font-semibold text-white' : 'text-gray-700 hover:bg-gray-100'
   }`
 
 export function AdminLayout() {
@@ -15,13 +16,16 @@ export function AdminLayout() {
         </h2>
         <nav className="space-y-1">
           <NavLink to="/admin/products" className={navClass}>
-            📦 Ürünler
+            <PackageIcon size={16} />
+            Ürünler
           </NavLink>
           <NavLink to="/admin/categories" className={navClass}>
-            🗂 Kategoriler
+            <TagIcon size={16} />
+            Kategoriler
           </NavLink>
           <NavLink to="/admin/orders" className={navClass}>
-            🧾 Siparişler
+            <ClipboardListIcon size={16} />
+            Siparişler
           </NavLink>
         </nav>
       </aside>

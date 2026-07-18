@@ -2,6 +2,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { Link, useSearchParams } from 'react-router-dom'
 import { ordersApi } from '@/api/orders'
 import type { OrderDto, OrderStatus } from '@/api/types'
+import { ErrorState } from '@/components/Feedback'
 import { formatMoney } from '@/components/Money'
 import { Pagination } from '@/components/Pagination'
 import { Spinner } from '@/components/Spinner'
@@ -82,8 +83,9 @@ export function AdminOrders() {
         <h1 className="text-xl font-bold">Siparişler</h1>
         <select
           value={statusFilter}
+          aria-label="Duruma göre filtrele"
           onChange={(e) => updateParams(1, e.target.value as '' | OrderStatus)}
-          className="rounded-md border border-gray-300 px-2 py-1.5 text-sm"
+          className="rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm focus:border-focus focus:ring-2 focus:ring-focus/30 focus:outline-none"
         >
           {STATUS_FILTERS.map((f) => (
             <option key={f.value} value={f.value}>
@@ -96,9 +98,10 @@ export function AdminOrders() {
       {orders.isPending ? (
         <Spinner fullPage />
       ) : orders.isError ? (
-        <p className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">
-          Siparişler yüklenemedi: {orders.error.message}
-        </p>
+        <ErrorState
+          message={`Siparişler yüklenemedi: ${orders.error.message}`}
+          onRetry={() => orders.refetch()}
+        />
       ) : orders.data.items.length === 0 ? (
         <p className="py-8 text-center text-gray-500">
           {statusFilter ? 'Bu durumda sipariş yok.' : 'Henüz sipariş yok.'}
