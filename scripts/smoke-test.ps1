@@ -75,6 +75,11 @@ try {
 catch {
     $failed = $true
     Write-Host "`nSMOKE TEST FAILED: $_" -ForegroundColor Red
+    Write-Host "== Service logs (last 100 lines each)" -ForegroundColor Yellow
+    foreach ($name in @('ordering-api', 'inventory-api', 'payment-api', 'notification-api', 'rabbitmq')) {
+        Write-Host "-- ${name}:" -ForegroundColor Yellow
+        & docker compose logs --tail 100 --no-color $name
+    }
 }
 finally {
     if ($Down) {

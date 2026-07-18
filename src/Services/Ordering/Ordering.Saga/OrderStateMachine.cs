@@ -31,10 +31,32 @@ public class OrderStateMachine : MassTransitStateMachine<OrderState>
         InstanceState(x => x.CurrentState);
 
         Event(() => OrderCreated, x => x.CorrelateById(m => m.Message.OrderId));
-        Event(() => StockReserved, x => x.CorrelateById(m => m.Message.OrderId));
-        Event(() => StockReservationFailed, x => x.CorrelateById(m => m.Message.OrderId));
-        Event(() => PaymentProcessed, x => x.CorrelateById(m => m.Message.OrderId));
-        Event(() => PaymentFailed, x => x.CorrelateById(m => m.Message.OrderId));
+
+        // OrderCreated fans out to this saga and to Inventory in parallel, so a follow-up
+        // event can reach the saga queue before the instance row is committed. The default
+        // missing-instance behavior silently drops the event and strands the order in
+        // Pending; faulting instead lets the endpoint's retry policy redeliver it until
+        // the instance exists.
+        Event(() => StockReserved, x =>
+        {
+            x.CorrelateById(m => m.Message.OrderId);
+            x.OnMissingInstance(m => m.Fault());
+        });
+        Event(() => StockReservationFailed, x =>
+        {
+            x.CorrelateById(m => m.Message.OrderId);
+            x.OnMissingInstance(m => m.Fault());
+        });
+        Event(() => PaymentProcessed, x =>
+        {
+            x.CorrelateById(m => m.Message.OrderId);
+            x.OnMissingInstance(m => m.Fault());
+        });
+        Event(() => PaymentFailed, x =>
+        {
+            x.CorrelateById(m => m.Message.OrderId);
+            x.OnMissingInstance(m => m.Fault());
+        });
 
         Initially(
             When(OrderCreated)
@@ -96,7 +118,7 @@ public class OrderStateMachine : MassTransitStateMachine<OrderState>
                 .TransitionTo(Cancelled));
 
         // Duplicate / late events in final states are ignored rather than faulted.
-        During(Confirmed, Ignore(PaymentProcessed), Ignore(StockReserved));
-        During(Cancelled, Ignore(StockReservationFailed), Ignore(PaymentFailed), Ignore(StockReserved));
+        During(Confirmed, Ignore(PaymentProcessed), Ignore(PaymentFailed), Ignore(StockReserved));
+        During(Cancelled, Ignore(StockReservationFailed), Ignore(PaymentFailed), Ignore(PaymentProcessed), Ignore(StockReserved));
     }
 }

@@ -121,6 +121,27 @@ public class OrderStateMachineTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task StockReserved_before_the_saga_instance_exists_faults_instead_of_being_dropped()
+    {
+        // OrderCreated fans out to the saga and Inventory in parallel, so StockReserved can
+        // beat OrderCreated to the saga queue. Faulting (instead of the silent-drop default)
+        // lets the endpoint retry policy redeliver until the instance exists.
+        var orderId = NewId.NextGuid();
+
+        await _harness.Bus.Publish(new StockReserved(orderId));
+
+        (await _harness.Published.Any<Fault<StockReserved>>(x => x.Context.Message.Message.OrderId == orderId))
+            .Should().BeTrue("an early StockReserved must fault so the retry policy can redeliver it");
+
+        // The redelivered event (after OrderCreated lands) completes the transition.
+        await DriveToAwaitingStockReservation(orderId);
+        await _harness.Bus.Publish(new StockReserved(orderId));
+
+        (await _harness.Published.Any<PaymentRequested>(x => x.Context.Message.OrderId == orderId))
+            .Should().BeTrue();
+    }
+
+    [Fact]
     public async Task StockReservationFailed_cancels_the_order_without_touching_payment()
     {
         var orderId = NewId.NextGuid();

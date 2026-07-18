@@ -34,7 +34,17 @@ builder.Services.AddMassTransit(x =>
         o.QueryDelay = TimeSpan.FromSeconds(1);
     });
     x.AddConfigureEndpointsCallback((context, _, cfg) =>
-        cfg.UseEntityFrameworkOutbox<OrderingDbContext>(context));
+    {
+        // Increasing intervals also cover saga events that arrive before the instance
+        // row is committed (OnMissingInstance faults, then this policy redelivers).
+        cfg.UseMessageRetry(r => r.Intervals(
+            TimeSpan.FromMilliseconds(500),
+            TimeSpan.FromSeconds(1),
+            TimeSpan.FromSeconds(2),
+            TimeSpan.FromSeconds(5),
+            TimeSpan.FromSeconds(10)));
+        cfg.UseEntityFrameworkOutbox<OrderingDbContext>(context);
+    });
 
     x.AddConsumer<OrderConfirmedConsumer>();
     x.AddConsumer<OrderCancelledConsumer>();
