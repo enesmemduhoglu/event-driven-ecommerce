@@ -50,3 +50,15 @@ public record OrderCancelled(
     string UserId,
     string UserEmail,
     string Reason);
+
+/// <summary>Published by Ordering when an admin marks a confirmed order as shipped.</summary>
+public record OrderShipped(
+    Guid OrderId,
+    string UserId,
+    string UserEmail);
+
+/// <summary>Published by Ordering when an admin marks a shipped order as delivered.</summary>
+public record OrderDelivered(
+    Guid OrderId,
+    string UserId,
+    string UserEmail);

@@ -50,7 +50,7 @@ export interface CustomerBasket {
   totalAmount: number
 }
 
-export type OrderStatus = 'Pending' | 'Confirmed' | 'Cancelled'
+export type OrderStatus = 'Pending' | 'Confirmed' | 'Cancelled' | 'Shipped' | 'Delivered'
 
 export interface OrderItem {
   productId: string
@@ -62,6 +62,7 @@ export interface OrderItem {
 export interface OrderDto {
   id: string
   userId: string
+  userEmail: string
   status: OrderStatus
   totalAmount: number
   shippingAddress: string

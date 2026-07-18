@@ -20,6 +20,7 @@ public record OrderItemDto(Guid ProductId, string ProductName, decimal UnitPrice
 public record OrderDto(
     Guid Id,
     string UserId,
+    string UserEmail,
     string Status,
     decimal TotalAmount,
     string ShippingAddress,
@@ -30,6 +31,7 @@ public record OrderDto(
     public static OrderDto From(Order order) => new(
         order.Id,
         order.UserId,
+        order.UserEmail,
         order.Status.ToString(),
         order.TotalAmount,
         order.ShippingAddress,

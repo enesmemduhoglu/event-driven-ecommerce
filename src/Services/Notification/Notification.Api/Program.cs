@@ -24,6 +24,8 @@ builder.Services.AddMassTransit(x =>
 {
     x.AddConsumer<OrderConfirmedConsumer>();
     x.AddConsumer<OrderCancelledConsumer>();
+    x.AddConsumer<OrderShippedConsumer>();
+    x.AddConsumer<OrderDeliveredConsumer>();
 
     // Service-prefixed queue names: each service gets its own queue per event
     // (otherwise same-named consumers across services would compete on one queue).

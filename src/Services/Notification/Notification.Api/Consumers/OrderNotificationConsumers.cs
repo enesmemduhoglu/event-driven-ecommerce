@@ -39,6 +39,70 @@ public class OrderConfirmedConsumer : IConsumer<OrderConfirmed>
     }
 }
 
+public class OrderShippedConsumer : IConsumer<OrderShipped>
+{
+    private readonly IHubContext<NotificationHub> _hubContext;
+    private readonly EmailSender _emailSender;
+    private readonly ILogger<OrderShippedConsumer> _logger;
+
+    public OrderShippedConsumer(IHubContext<NotificationHub> hubContext, EmailSender emailSender, ILogger<OrderShippedConsumer> logger)
+    {
+        _hubContext = hubContext;
+        _emailSender = emailSender;
+        _logger = logger;
+    }
+
+    public async Task Consume(ConsumeContext<OrderShipped> context)
+    {
+        var m = context.Message;
+
+        await _hubContext.Clients.User(m.UserId).SendAsync("orderStatusChanged", new
+        {
+            orderId = m.OrderId,
+            status = "Shipped"
+        });
+
+        await _emailSender.SendAsync(
+            m.UserEmail,
+            $"Order {m.OrderId} shipped",
+            $"Your order {m.OrderId} has shipped and is on its way.");
+
+        _logger.LogInformation("Notified user {UserId} about shipped order {OrderId}", m.UserId, m.OrderId);
+    }
+}
+
+public class OrderDeliveredConsumer : IConsumer<OrderDelivered>
+{
+    private readonly IHubContext<NotificationHub> _hubContext;
+    private readonly EmailSender _emailSender;
+    private readonly ILogger<OrderDeliveredConsumer> _logger;
+
+    public OrderDeliveredConsumer(IHubContext<NotificationHub> hubContext, EmailSender emailSender, ILogger<OrderDeliveredConsumer> logger)
+    {
+        _hubContext = hubContext;
+        _emailSender = emailSender;
+        _logger = logger;
+    }
+
+    public async Task Consume(ConsumeContext<OrderDelivered> context)
+    {
+        var m = context.Message;
+
+        await _hubContext.Clients.User(m.UserId).SendAsync("orderStatusChanged", new
+        {
+            orderId = m.OrderId,
+            status = "Delivered"
+        });
+
+        await _emailSender.SendAsync(
+            m.UserEmail,
+            $"Order {m.OrderId} delivered",
+            $"Your order {m.OrderId} has been delivered. Enjoy!");
+
+        _logger.LogInformation("Notified user {UserId} about delivered order {OrderId}", m.UserId, m.OrderId);
+    }
+}
+
 public class OrderCancelledConsumer : IConsumer<OrderCancelled>
 {
     private readonly IHubContext<NotificationHub> _hubContext;

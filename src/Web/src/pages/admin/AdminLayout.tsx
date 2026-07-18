@@ -20,6 +20,9 @@ export function AdminLayout() {
           <NavLink to="/admin/categories" className={navClass}>
             🗂 Kategoriler
           </NavLink>
+          <NavLink to="/admin/orders" className={navClass}>
+            🧾 Siparişler
+          </NavLink>
         </nav>
       </aside>
       <div className="min-w-0 flex-1">

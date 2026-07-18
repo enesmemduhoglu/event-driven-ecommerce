@@ -1,5 +1,6 @@
 using BuildingBlocks.Common.Auth;
 using BuildingBlocks.Common.Exceptions;
+using BuildingBlocks.Common.Models;
 using EventBus.Contracts.Ordering;
 using MassTransit;
 using Microsoft.AspNetCore.Authorization;
@@ -67,6 +68,65 @@ public class OrdersController : ControllerBase
 
         return orders.Select(OrderDto.From).ToList();
     }
+
+    [Authorize(Roles = "Admin")]
+    [HttpGet("all")]
+    public async Task<ActionResult<PagedResult<OrderDto>>> GetAll(
+        [FromQuery] OrderStatus? status,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20)
+    {
+        page = Math.Max(page, 1);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
+        var query = _dbContext.Orders.AsNoTracking().Include(o => o.Items).AsQueryable();
+        if (status.HasValue)
+        {
+            query = query.Where(o => o.Status == status.Value);
+        }
+
+        var total = await query.LongCountAsync();
+        var orders = await query
+            .OrderByDescending(o => o.CreatedAtUtc)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return new PagedResult<OrderDto>(orders.Select(OrderDto.From).ToList(), total, page, pageSize);
+    }
+
+    [Authorize(Roles = "Admin")]
+    [HttpPost("{id:guid}/ship")]
+    public async Task<ActionResult<OrderDto>> Ship(Guid id)
+    {
+        var order = await LoadOrderAsync(id);
+        order.MarkShipped();
+
+        // Outbox: committed atomically with the status change.
+        await _publishEndpoint.Publish(new OrderShipped(order.Id, order.UserId, order.UserEmail));
+        await _dbContext.SaveChangesAsync();
+
+        return OrderDto.From(order);
+    }
+
+    [Authorize(Roles = "Admin")]
+    [HttpPost("{id:guid}/deliver")]
+    public async Task<ActionResult<OrderDto>> Deliver(Guid id)
+    {
+        var order = await LoadOrderAsync(id);
+        order.MarkDelivered();
+
+        await _publishEndpoint.Publish(new OrderDelivered(order.Id, order.UserId, order.UserEmail));
+        await _dbContext.SaveChangesAsync();
+
+        return OrderDto.From(order);
+    }
+
+    private async Task<Order> LoadOrderAsync(Guid id)
+        => await _dbContext.Orders
+            .Include(o => o.Items)
+            .SingleOrDefaultAsync(o => o.Id == id)
+            ?? throw new NotFoundException(nameof(Order), id);
 
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<OrderDto>> GetById(Guid id)

@@ -8,7 +8,9 @@ public enum OrderStatus
     /// <summary>Created; the saga is coordinating stock reservation and payment.</summary>
     Pending = 0,
     Confirmed = 1,
-    Cancelled = 2
+    Cancelled = 2,
+    Shipped = 3,
+    Delivered = 4
 }
 
 public class Order : BaseEntity
@@ -51,6 +53,28 @@ public class Order : BaseEntity
         }
 
         Status = OrderStatus.Confirmed;
+        MarkUpdated();
+    }
+
+    public void MarkShipped()
+    {
+        if (Status != OrderStatus.Confirmed)
+        {
+            throw new DomainException($"Only confirmed orders can be shipped (current: {Status}).");
+        }
+
+        Status = OrderStatus.Shipped;
+        MarkUpdated();
+    }
+
+    public void MarkDelivered()
+    {
+        if (Status != OrderStatus.Shipped)
+        {
+            throw new DomainException($"Only shipped orders can be delivered (current: {Status}).");
+        }
+
+        Status = OrderStatus.Delivered;
         MarkUpdated();
     }
 

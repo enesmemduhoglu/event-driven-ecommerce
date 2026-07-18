@@ -64,6 +64,16 @@ export function OrderDetail() {
             Siparişiniz onaylandı; ödeme alındı ve stok ayrıldı.
           </p>
         )}
+        {o.status === 'Shipped' && (
+          <p className="mt-4 rounded-md bg-sky-50 px-3 py-2 text-sm text-sky-800">
+            Siparişiniz kargoya verildi; yakında adresinize teslim edilecek.
+          </p>
+        )}
+        {o.status === 'Delivered' && (
+          <p className="mt-4 rounded-md bg-green-50 px-3 py-2 text-sm text-green-800">
+            Siparişiniz teslim edildi. Bizi tercih ettiğiniz için teşekkürler!
+          </p>
+        )}
 
         <h2 className="mt-6 mb-2 font-semibold">Ürünler</h2>
         <ul className="divide-y divide-gray-100 rounded-md border border-gray-100">

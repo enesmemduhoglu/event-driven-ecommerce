@@ -21,6 +21,7 @@ import { AdminLayout } from '@/pages/admin/AdminLayout'
 import { AdminProducts } from '@/pages/admin/AdminProducts'
 import { AdminProductForm } from '@/pages/admin/AdminProductForm'
 import { AdminCategories } from '@/pages/admin/AdminCategories'
+import { AdminOrders } from '@/pages/admin/AdminOrders'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -66,6 +67,7 @@ const router = createBrowserRouter([
               { path: 'products/new', element: <AdminProductForm /> },
               { path: 'products/:id/edit', element: <AdminProductForm /> },
               { path: 'categories', element: <AdminCategories /> },
+              { path: 'orders', element: <AdminOrders /> },
             ],
           },
         ],

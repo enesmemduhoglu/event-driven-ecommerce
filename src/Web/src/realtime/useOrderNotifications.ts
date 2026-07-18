@@ -41,6 +41,10 @@ export function useOrderNotifications() {
         )
       } else if (payload.status === 'Cancelled') {
         toast(`Siparişiniz iptal edildi: ${payload.reason ?? 'bilinmeyen neden'}`, 'error')
+      } else if (payload.status === 'Shipped') {
+        toast('Siparişiniz kargoya verildi 🚚', 'success')
+      } else if (payload.status === 'Delivered') {
+        toast('Siparişiniz teslim edildi ✅', 'success')
       }
 
       queryClient.setQueryData<OrderDto | undefined>(['order', payload.orderId], (old) =>
