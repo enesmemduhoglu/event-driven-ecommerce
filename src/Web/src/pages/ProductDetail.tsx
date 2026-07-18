@@ -147,6 +147,7 @@ export function ProductDetail() {
           productId={p.id}
           name={p.name}
           categoryName={p.categoryName}
+          imageUrl={p.imageUrl}
           className="aspect-square w-full max-w-md self-center rounded-lg lg:self-start"
           emojiClassName="text-9xl"
         />

@@ -40,8 +40,13 @@ function send(path: string, init?: ApiInit): Promise<Response> {
 
   let body: BodyInit | undefined
   if (init?.body !== undefined) {
-    headers.set('Content-Type', 'application/json')
-    body = JSON.stringify(init.body)
+    if (init.body instanceof FormData) {
+      // Content-Type'ı tarayıcı belirler (multipart boundary ile birlikte).
+      body = init.body
+    } else {
+      headers.set('Content-Type', 'application/json')
+      body = JSON.stringify(init.body)
+    }
   }
 
   return fetch(`${API_URL}${path}`, { ...init, headers, body })

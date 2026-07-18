@@ -1,5 +1,8 @@
-// Backend'de ürün görseli olmadığı için ürün kimliğinden türetilen deterministik
-// bir placeholder üretilir (aynı ürün her zaman aynı görünür).
+// Yüklenmiş görsel varsa onu gösterir; yoksa (veya yüklenemezse) ürün kimliğinden
+// türetilen deterministik placeholder'a düşer (aynı ürün her zaman aynı görünür).
+
+import { useState } from 'react'
+import { API_URL } from '@/api/http'
 
 export function hashCode(s: string): number {
   let h = 0
@@ -27,6 +30,7 @@ interface ProductImageProps {
   productId: string
   name: string
   categoryName?: string
+  imageUrl?: string | null
   className?: string
   emojiClassName?: string
 }
@@ -35,9 +39,24 @@ export function ProductImage({
   productId,
   name,
   categoryName = '',
+  imageUrl,
   className = '',
   emojiClassName = 'text-6xl',
 }: ProductImageProps) {
+  const [failed, setFailed] = useState(false)
+
+  if (imageUrl && !failed) {
+    return (
+      <img
+        src={`${API_URL}${imageUrl}`}
+        alt={name}
+        loading="lazy"
+        onError={() => setFailed(true)}
+        className={`object-cover ${className}`}
+      />
+    )
+  }
+
   const hue = hashCode(productId) % 360
   return (
     <div

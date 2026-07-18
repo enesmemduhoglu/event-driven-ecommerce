@@ -31,6 +31,11 @@ export const catalogApi = {
   changePrice: (id: string, newPrice: number) =>
     api<ProductDto>(`/api/products/${id}/price`, { method: 'PATCH', body: { newPrice } }),
   deleteProduct: (id: string) => api<void>(`/api/products/${id}`, { method: 'DELETE' }),
+  uploadProductImage: (id: string, file: File) => {
+    const fd = new FormData()
+    fd.append('file', file)
+    return api<ProductDto>(`/api/products/${id}/image`, { method: 'POST', body: fd })
+  },
   createCategory: (req: { name: string; description?: string }) =>
     api<CategoryDto>('/api/categories', { method: 'POST', body: req }),
   updateCategory: (id: string, req: { name: string; description?: string }) =>

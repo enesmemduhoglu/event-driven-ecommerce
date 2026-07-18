@@ -5,6 +5,7 @@ using BuildingBlocks.Logging;
 using Catalog.Infrastructure;
 using Catalog.Infrastructure.Data;
 using MassTransit;
+using Microsoft.Extensions.FileProviders;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -57,6 +58,12 @@ app.UseGlobalExceptionHandling();
 
 app.UseSwagger();
 app.UseSwaggerUI();
+
+// Uploaded product images. Explicit file provider: wwwroot may not exist on first
+// run, in which case WebRootPath was resolved as null at builder time.
+var webRoot = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
+Directory.CreateDirectory(webRoot);
+app.UseStaticFiles(new StaticFileOptions { FileProvider = new PhysicalFileProvider(webRoot) });
 
 app.UseAuthentication();
 app.UseAuthorization();

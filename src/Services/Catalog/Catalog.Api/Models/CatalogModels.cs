@@ -15,6 +15,7 @@ public record ProductDto(
     decimal Price,
     Guid CategoryId,
     string CategoryName,
+    string? ImageUrl,
     DateTime CreatedAtUtc);
 
 public record CreateProductRequest(

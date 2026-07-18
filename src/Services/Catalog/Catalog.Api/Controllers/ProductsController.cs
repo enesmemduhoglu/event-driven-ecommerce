@@ -22,15 +22,25 @@ public class ProductsController : ControllerBase
         AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
     };
 
+    // Extension comes from the whitelisted content type, never the client file name.
+    private static readonly Dictionary<string, string> AllowedImageTypes = new()
+    {
+        ["image/jpeg"] = ".jpg",
+        ["image/png"] = ".png",
+        ["image/webp"] = ".webp"
+    };
+
     private readonly CatalogDbContext _dbContext;
     private readonly IPublishEndpoint _publishEndpoint;
     private readonly IDistributedCache _cache;
+    private readonly IWebHostEnvironment _environment;
 
-    public ProductsController(CatalogDbContext dbContext, IPublishEndpoint publishEndpoint, IDistributedCache cache)
+    public ProductsController(CatalogDbContext dbContext, IPublishEndpoint publishEndpoint, IDistributedCache cache, IWebHostEnvironment environment)
     {
         _dbContext = dbContext;
         _publishEndpoint = publishEndpoint;
         _cache = cache;
+        _environment = environment;
     }
 
     [HttpGet]
@@ -53,7 +63,7 @@ public class ProductsController : ControllerBase
             .OrderBy(p => p.Name)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(p => new ProductDto(p.Id, p.Name, p.Description, p.Price, p.CategoryId, p.Category.Name, p.CreatedAtUtc))
+            .Select(p => new ProductDto(p.Id, p.Name, p.Description, p.Price, p.CategoryId, p.Category.Name, p.ImageUrl, p.CreatedAtUtc))
             .ToListAsync();
 
         return new PagedResult<ProductDto>(items, total, page, pageSize);
@@ -95,7 +105,7 @@ public class ProductsController : ControllerBase
         await _dbContext.SaveChangesAsync();
 
         var dto = new ProductDto(product.Id, product.Name, product.Description, product.Price,
-            category.Id, category.Name, product.CreatedAtUtc);
+            category.Id, category.Name, product.ImageUrl, product.CreatedAtUtc);
         return CreatedAtAction(nameof(GetById), new { id = product.Id }, dto);
     }
 
@@ -117,7 +127,7 @@ public class ProductsController : ControllerBase
         await _cache.RemoveAsync(CacheKey(id));
 
         return new ProductDto(product.Id, product.Name, product.Description, product.Price,
-            category.Id, category.Name, product.CreatedAtUtc);
+            category.Id, category.Name, product.ImageUrl, product.CreatedAtUtc);
     }
 
     [Authorize(Roles = "Admin")]
@@ -129,6 +139,47 @@ public class ProductsController : ControllerBase
 
         await _publishEndpoint.Publish(new ProductPriceChanged(
             product.Id, oldPrice, product.Price, DateTime.UtcNow));
+
+        await _dbContext.SaveChangesAsync();
+        await _cache.RemoveAsync(CacheKey(id));
+
+        return ToDto(product);
+    }
+
+    [Authorize(Roles = "Admin")]
+    [HttpPost("{id:guid}/image")]
+    [RequestSizeLimit(2 * 1024 * 1024)]
+    public async Task<ActionResult<ProductDto>> UploadImage(Guid id, IFormFile? file)
+    {
+        if (file is null || file.Length == 0)
+        {
+            throw new DomainException("An image file is required.");
+        }
+
+        if (!AllowedImageTypes.TryGetValue(file.ContentType, out var extension))
+        {
+            throw new DomainException("Only JPEG, PNG and WebP images are allowed.");
+        }
+
+        var product = await LoadProductAsync(id, track: true);
+
+        var webRoot = _environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot");
+        var dir = Path.Combine(webRoot, "images", "products");
+        Directory.CreateDirectory(dir);
+
+        // Timestamped file name so a replacement never serves a stale browser-cached image.
+        foreach (var oldFile in Directory.EnumerateFiles(dir, $"{id}-*"))
+        {
+            System.IO.File.Delete(oldFile);
+        }
+
+        var fileName = $"{id}-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}{extension}";
+        await using (var stream = System.IO.File.Create(Path.Combine(dir, fileName)))
+        {
+            await file.CopyToAsync(stream);
+        }
+
+        product.SetImage($"/images/products/{fileName}");
 
         await _dbContext.SaveChangesAsync();
         await _cache.RemoveAsync(CacheKey(id));
@@ -167,5 +218,5 @@ public class ProductsController : ControllerBase
 
     private static ProductDto ToDto(Product product) => new(
         product.Id, product.Name, product.Description, product.Price,
-        product.CategoryId, product.Category.Name, product.CreatedAtUtc);
+        product.CategoryId, product.Category.Name, product.ImageUrl, product.CreatedAtUtc);
 }

@@ -14,6 +14,7 @@ export function ProductCard({ product }: { product: ProductDto }) {
         productId={product.id}
         name={product.name}
         categoryName={product.categoryName}
+        imageUrl={product.imageUrl}
         className="aspect-square w-full rounded-md"
       />
       <h3 className="mt-3 line-clamp-2 text-sm text-gray-900 group-hover:text-[#c45500]">

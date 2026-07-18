@@ -35,6 +35,7 @@ public class CatalogDbContext : DbContext
             entity.Property(p => p.Name).HasMaxLength(200).IsRequired();
             entity.Property(p => p.Description).HasMaxLength(2000).IsRequired();
             entity.Property(p => p.Price).HasPrecision(18, 2);
+            entity.Property(p => p.ImageUrl).HasMaxLength(500);
             entity.HasOne(p => p.Category)
                 .WithMany()
                 .HasForeignKey(p => p.CategoryId)

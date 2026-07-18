@@ -229,6 +229,7 @@ export function AdminProducts() {
                           productId={p.id}
                           name={p.name}
                           categoryName={p.categoryName}
+                          imageUrl={p.imageUrl}
                           className="size-10 rounded-md"
                           emojiClassName="text-lg"
                         />

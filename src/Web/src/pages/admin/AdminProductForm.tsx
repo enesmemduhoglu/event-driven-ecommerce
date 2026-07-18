@@ -1,11 +1,71 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { catalogApi } from '@/api/catalog'
+import type { ProductDto } from '@/api/types'
+import { ProductImage } from '@/components/ProductImage'
 import { Spinner } from '@/components/Spinner'
 import { useToast } from '@/components/Toaster'
 import { btnPrimary, btnSecondary, card, input as inputClass, linkBlue } from '@/components/ui'
+
+const MAX_IMAGE_BYTES = 2 * 1024 * 1024
+
+function ImageSection({ product }: { product: ProductDto }) {
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const upload = useMutation({
+    mutationFn: (file: File) => catalogApi.uploadProductImage(product.id, file),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['product', product.id] })
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      toast('Görsel yüklendi', 'success')
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    },
+    onError: (err) => toast(err.message, 'error'),
+  })
+
+  return (
+    <div className="mt-6 border-t border-gray-100 pt-4">
+      <h2 className="mb-2 font-semibold">Ürün Görseli</h2>
+      <div className="flex items-start gap-4">
+        <ProductImage
+          key={product.imageUrl ?? 'placeholder'}
+          productId={product.id}
+          name={product.name}
+          categoryName={product.categoryName}
+          imageUrl={product.imageUrl}
+          className="size-28 rounded-md"
+          emojiClassName="text-4xl"
+        />
+        <div className="flex-1">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            disabled={upload.isPending}
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (!file) return
+              if (file.size > MAX_IMAGE_BYTES) {
+                toast('Görsel en fazla 2 MB olabilir', 'error')
+                e.target.value = ''
+                return
+              }
+              upload.mutate(file)
+            }}
+            className="block text-sm text-gray-700 file:mr-3 file:rounded-full file:border file:border-gray-300 file:bg-white file:px-3 file:py-1.5 file:text-sm file:hover:bg-gray-50"
+          />
+          <p className="mt-2 text-xs text-gray-500">
+            JPEG, PNG veya WebP; en fazla 2 MB. {upload.isPending && 'Yükleniyor…'}
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 interface FormState {
   name: string
@@ -156,6 +216,14 @@ export function AdminProductForm() {
           </Link>
         </div>
       </form>
+
+      {isEdit && existing.data ? (
+        <ImageSection product={existing.data} />
+      ) : (
+        <p className="mt-6 border-t border-gray-100 pt-4 text-xs text-gray-500">
+          Görseli, ürünü oluşturduktan sonra düzenleme ekranından ekleyebilirsiniz.
+        </p>
+      )}
     </div>
   )
 }

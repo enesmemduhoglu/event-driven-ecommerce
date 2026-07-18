@@ -10,6 +10,8 @@ public class Product : BaseEntity
     public decimal Price { get; private set; }
     public Guid CategoryId { get; private set; }
     public Category Category { get; private set; } = default!;
+    /// <summary>Gateway-relative path (e.g. /images/products/{file}); null means no image uploaded.</summary>
+    public string? ImageUrl { get; private set; }
 
     private Product()
     {
@@ -44,6 +46,17 @@ public class Product : BaseEntity
         SetPrice(newPrice);
         MarkUpdated();
         return oldPrice;
+    }
+
+    public void SetImage(string imageUrl)
+    {
+        if (string.IsNullOrWhiteSpace(imageUrl))
+        {
+            throw new DomainException("Image URL cannot be empty.");
+        }
+
+        ImageUrl = imageUrl;
+        MarkUpdated();
     }
 
     private void SetName(string name)

@@ -26,6 +26,7 @@ export interface ProductDto {
   price: number
   categoryId: string
   categoryName: string
+  imageUrl: string | null
   createdAtUtc: string
 }
 

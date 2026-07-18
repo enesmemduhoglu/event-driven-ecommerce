@@ -486,3 +486,6 @@ $RECYCLE.BIN/
 # JWT signing keys (generated on first run)
 keys/
 
+
+# Uploaded product images (runtime content, not source)
+src/Services/Catalog/Catalog.Api/wwwroot/
