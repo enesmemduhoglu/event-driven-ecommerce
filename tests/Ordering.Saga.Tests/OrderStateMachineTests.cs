@@ -73,9 +73,8 @@ public class OrderStateMachineTests : IAsyncLifetime
             x.Context.Message.Amount == 219.98m &&
             x.Context.Message.CardNumber == "4111111111111111")).Should().BeTrue();
 
-        _sagaHarness.Created.ContainsInState(
-                orderId, _sagaHarness.StateMachine, _sagaHarness.StateMachine.AwaitingPayment)
-            .Should().NotBeNull();
+        // Exists polls until the transition lands; Published fires mid-consume, before TransitionTo.
+        (await _sagaHarness.Exists(orderId, x => x.AwaitingPayment)).Should().NotBeNull();
     }
 
     [Fact]
@@ -92,9 +91,7 @@ public class OrderStateMachineTests : IAsyncLifetime
             x.Context.Message.OrderId == orderId &&
             x.Context.Message.TotalAmount == 219.98m)).Should().BeTrue();
 
-        _sagaHarness.Created.ContainsInState(
-                orderId, _sagaHarness.StateMachine, _sagaHarness.StateMachine.Confirmed)
-            .Should().NotBeNull();
+        (await _sagaHarness.Exists(orderId, x => x.Confirmed)).Should().NotBeNull();
     }
 
     [Fact]
@@ -114,8 +111,8 @@ public class OrderStateMachineTests : IAsyncLifetime
             x.Context.Message.OrderId == orderId &&
             x.Context.Message.Reason == "Card declined by issuer")).Should().BeTrue();
 
-        var instance = _sagaHarness.Created.ContainsInState(
-            orderId, _sagaHarness.StateMachine, _sagaHarness.StateMachine.Cancelled);
+        (await _sagaHarness.Exists(orderId, x => x.Cancelled)).Should().NotBeNull();
+        var instance = _sagaHarness.Created.Contains(orderId);
         instance.Should().NotBeNull();
         instance!.FailureReason.Should().Be("Card declined by issuer");
     }
@@ -158,8 +155,6 @@ public class OrderStateMachineTests : IAsyncLifetime
         (await _harness.Published.Any<StockReleaseRequested>(x => x.Context.Message.OrderId == orderId))
             .Should().BeFalse("nothing was reserved, so nothing should be released");
 
-        _sagaHarness.Created.ContainsInState(
-                orderId, _sagaHarness.StateMachine, _sagaHarness.StateMachine.Cancelled)
-            .Should().NotBeNull();
+        (await _sagaHarness.Exists(orderId, x => x.Cancelled)).Should().NotBeNull();
     }
 }
